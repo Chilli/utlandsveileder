@@ -1,19 +1,35 @@
 import { DOCUMENTATION_SCENARIOS } from './registrationConfig.js';
 
+ function getSelectedCircumstances(data) {
+   return data?.circumstances || (data?.circumstance ? [data.circumstance] : []);
+ }
+
+ function hasCircumstance(data, circumstanceId) {
+   return getSelectedCircumstances(data).includes(circumstanceId);
+ }
+
 export function getDocumentationScenario(data) {
-  if (!data.country || !data.circumstance) {
+  if (data?.isUndocumented) {
     return null;
   }
 
-  if (data.circumstance === 'worker') {
-    return data.country.zone === 'EU_EOS' ? 'worker_eu_eos' : 'worker_other';
+  if (!data.country || getSelectedCircumstances(data).length === 0) {
+    return null;
   }
 
-  if (data.circumstance === 'asylum') {
+  if (hasCircumstance(data, 'asylum')) {
     return 'asylum';
   }
 
-  if (data.circumstance === 'family_reunification') {
+  if (hasCircumstance(data, 'child') && data.country.zone === 'EU_EOS') {
+    return 'eu_eos_acute';
+  }
+
+  if (hasCircumstance(data, 'worker')) {
+    return data.country.zone === 'EU_EOS' ? 'worker_eu_eos' : 'worker_other';
+  }
+
+  if (hasCircumstance(data, 'family_reunification')) {
     if (data.country.zone === 'Norden') {
       return 'norden';
     }
@@ -51,7 +67,7 @@ export function getDocumentationScenario(data) {
 }
 
 export function isDocumentationSufficient(data, selectedDocs) {
-  if (data?.circumstance === 'asylum' && selectedDocs.includes('asylum_no_docs')) {
+  if (hasCircumstance(data, 'asylum') && selectedDocs.includes('asylum_no_docs')) {
     return false;
   }
 
@@ -74,28 +90,54 @@ export function isDocumentationSufficient(data, selectedDocs) {
 }
 
 export function calculateResult(data) {
-  const { country, circumstance, need, hasDoc } = data;
+  const { country, need, hasDoc } = data;
+  const selectedCircumstances = getSelectedCircumstances(data);
+  const hasChildCombination = hasCircumstance(data, 'child') && selectedCircumstances.length > 1;
   let res = null;
 
-  if (circumstance === 'worker') {
+  if (data?.isUndocumented && hasCircumstance(data, 'child')) {
+    res = {
+      type: 'success',
+      trygdenasjon: 'Ukjent',
+      finansiering: 'Folketrygden / Fritak',
+      beskrivelse: 'Barn under 16 år uten lovlig opphold skal få gratis behandling i Norge og betaler ingen egenandel.',
+      handling: 'Registrer pasienten med fritak for egenandel. Sørg for at alder er riktig registrert. Helsehjelp skal gis også uten lovlig opphold.'
+    };
+  } else if (data?.isUndocumented) {
+    res = {
+      type: 'warning',
+      trygdenasjon: 'Ukjent',
+      finansiering: 'Selvbetalende',
+      beskrivelse: 'Personer uten lovlig opphold har kun rett til akutt nødvendig helsehjelp som ikke kan vente.',
+      handling: 'Skal i utgangspunktet betale selv. Helsehjelp kan uansett ikke nektes ved akutt behov. Staten dekker eventuelt tap i etterkant.'
+    };
+  } else if (hasChildCombination) {
+    res = {
+      type: 'success',
+      trygdenasjon: hasCircumstance(data, 'asylum') ? 'Norge' : country ? country.name : 'Ukjent',
+      finansiering: 'Folketrygden / Fritak',
+      beskrivelse: 'Pasient under 16 år som også omfattes av en annen omstendighet registreres uten egenandel.',
+      handling: 'Registrer pasienten med fritak for egenandel. Sørg for at alder er riktig registrert.'
+    };
+  } else if (hasCircumstance(data, 'worker')) {
     if (hasDoc === true) {
       res = {
         type: 'success',
         trygdenasjon: 'Norge',
         finansiering: 'Folketrygden / Vanlig egenandel',
         beskrivelse: 'Pasienten har gyldig dokumentasjon på helserettigheter/arbeidsforhold i Norge.',
-        handling: 'Kopier pass og fremvist dokumentasjon (EHIC/Helfo-vedtak, eller arbeidskontrakt/skattekort/lønnsslipp).'
+        handling: 'Kopier pass. Kopier fremvist dokumentasjon. Dette kan være EHIC, Helfo-vedtak, arbeidskontrakt, skattekort eller lønnsslipp.'
       };
     } else {
       res = {
-        type: 'error',
+        type: 'warning',
         trygdenasjon: country ? country.name : 'Ukjent',
         finansiering: 'Selvbetalende',
         beskrivelse: 'Pasienten mangler dokumentasjon på arbeidsforhold eller helserettigheter i Norge.',
         handling: 'Pasienten registreres som selvbetalende inntil gyldig dokumentasjon kan fremvises.'
       };
     }
-  } else if (circumstance === 'family_reunification') {
+  } else if (hasCircumstance(data, 'family_reunification')) {
     res = {
       type: hasDoc === true ? 'warning' : 'error',
       trygdenasjon: country ? country.name : 'Ukjent',
@@ -105,7 +147,7 @@ export function calculateResult(data) {
         ? 'Kopier fremvist legitimasjon og dokumentasjon for adresse/tilhørighet. Pasienten registreres som selvbetalende. Merk at graviditet i seg selv ikke gir dekning fra Norge mens søknaden fortsatt er til behandling.'
         : 'Pasienten registreres som selvbetalende. Innhent legitimasjon og adresseopplysninger så snart som mulig for korrekt registrering og fakturagrunnlag. Merk at graviditet i seg selv ikke gir dekning fra Norge mens søknaden fortsatt er til behandling.'
     };
-  } else if (circumstance === 'asylum') {
+  } else if (hasCircumstance(data, 'asylum')) {
     if (hasDoc === true) {
       res = {
         type: 'success',
@@ -123,7 +165,7 @@ export function calculateResult(data) {
         handling: 'Status må avklares før rettigheter kan registreres. Pasient må innhente asylsøkerbevis/registreringsbevis og bostedadresse i Norge og ettersende dette til helseforetaket.'
       };
     }
-  } else if (circumstance === 'prisoner') {
+  } else if (hasCircumstance(data, 'prisoner')) {
     res = {
       type: 'success',
       trygdenasjon: 'Norge',
@@ -131,22 +173,34 @@ export function calculateResult(data) {
       beskrivelse: 'Kriminalomsorgen dekker utgifter til helsehjelp for innsatte.',
       handling: 'Faktura for helsehjelp og evt. egenandel sendes den aktuelle anstalten.'
     };
-  } else if (circumstance === 'undocumented') {
-    res = {
-      type: 'warning',
-      trygdenasjon: country ? country.name : 'Ukjent',
-      finansiering: 'Selvbetalende',
-      beskrivelse: 'Personer uten lovlig opphold har kun rett til akutt (nødvendig) helsehjelp som ikke kan vente.',
-      handling: 'Skal i utgangspunktet betale selv. Helsehjelp kan uansett ikke nektes ved akutt behov. Staten dekker evt. tap i etterkant.'
-    };
-  } else if (circumstance === 'child') {
-    res = {
-      type: 'success',
-      trygdenasjon: country ? country.name : 'Norge',
-      finansiering: 'Folketrygden / Fritak',
-      beskrivelse: 'Barn under 16 år har fulle rettigheter og fritak for egenandel.',
-      handling: 'Sørg for at alder er riktig registrert.'
-    };
+  } else if (hasCircumstance(data, 'child')) {
+    if (country?.zone === 'EU_EOS') {
+      if (hasDoc === true) {
+        res = {
+          type: 'success',
+          trygdenasjon: country.name,
+          finansiering: 'EU/EØS / Fritak for egenandel',
+          beskrivelse: 'Pasient under 16 år fra EU/EØS med gyldig dokumentasjon har rett til helsehjelp uten egenandel.',
+          handling: 'Registrer gyldig EHIC eller annen rettighetsdokumentasjon. Sørg for at pasienten registreres uten egenandel.'
+        };
+      } else if (hasDoc === false) {
+        res = {
+          type: 'error',
+          trygdenasjon: country.name,
+          finansiering: 'Selvbetalende',
+          beskrivelse: 'Pasient under 16 år fra EU/EØS mangler gyldig dokumentasjon på helserettigheter og må derfor registreres som selvbetalende.',
+          handling: 'Pasienten registreres som selvbetalende inntil EHIC eller annen gyldig dokumentasjon fremvises.'
+        };
+      }
+    } else {
+      res = {
+        type: 'success',
+        trygdenasjon: country ? country.name : 'Norge',
+        finansiering: 'Folketrygden / Fritak',
+        beskrivelse: 'Pasient under 16 år har fritak for egenandel.',
+        handling: 'Sørg for at alder er riktig registrert.'
+      };
+    }
   } else if (!country) {
     return null;
   } else if (country.zone === 'Norden') {
@@ -231,7 +285,7 @@ export function calculateResult(data) {
     }
   }
 
-  if (res && circumstance === 'pregnancy') {
+  if (res && selectedCircumstances.includes('pregnancy')) {
     res.beskrivelse += ' (Merk: Helsehjelp i forbindelse med svangerskap og fødsel regnes som nødvendig helsehjelp og kan ikke nektes, uavhengig av finansiering og oppholdsstatus.)';
   }
 

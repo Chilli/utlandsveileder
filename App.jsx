@@ -17,14 +17,44 @@ export default function RegistrationWizard() {
   const [step, setStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDocs, setSelectedDocs] = useState([]);
+  
   const [highlightedCountryIndex, setHighlightedCountryIndex] = useState(0);
   
   const [data, setData] = useState({
     country: null,
     circumstance: null,
+    circumstances: [],
+    isUndocumented: false,
     need: null,
     hasDoc: null,
   });
+
+  const getSelectedCircumstances = (value) => value?.circumstances || (value?.circumstance ? [value.circumstance] : []);
+
+  const hasCircumstance = (value, circumstanceId) => getSelectedCircumstances(value).includes(circumstanceId);
+
+  const shouldSkipDocumentation = (value) => {
+    const selectedCircumstances = getSelectedCircumstances(value);
+    const hasChildCombination = selectedCircumstances.includes('child') && selectedCircumstances.length > 1;
+
+    if (selectedCircumstances.includes('prisoner')) {
+      return true;
+    }
+
+    if (hasChildCombination) {
+      return true;
+    }
+
+    if (value?.isUndocumented) {
+      return true;
+    }
+
+    if (selectedCircumstances.includes('child') && value?.country?.zone !== 'EU_EOS' && !selectedCircumstances.includes('worker') && !selectedCircumstances.includes('family_reunification')) {
+      return true;
+    }
+
+    return false;
+  };
 
   const filteredCountries = useMemo(() => {
     if (!searchTerm) return [];
@@ -53,7 +83,7 @@ export default function RegistrationWizard() {
   };
 
   const handleCountrySelect = (country) => {
-    updateData('country', country);
+    setData((prev) => ({ ...prev, country, isUndocumented: false }));
     setSearchTerm(country.name);
     setHighlightedCountryIndex(0);
     setTimeout(() => setStep(2), 150);
@@ -64,60 +94,92 @@ export default function RegistrationWizard() {
     setSearchTerm('');
     setSelectedDocs([]);
     setHighlightedCountryIndex(0);
-    setData({ country: null, circumstance: null, need: null, hasDoc: null });
+    setData({ country: null, circumstance: null, circumstances: [], isUndocumented: false, need: null, hasDoc: null });
   };
 
-  const handleUnknownPatient = () => {
-    setData({ country: null, circumstance: 'undocumented', need: null, hasDoc: null });
+  const handleUnknownPatient = (isChild = false) => {
+    setData({ country: null, circumstance: isChild ? 'child' : null, circumstances: isChild ? ['child'] : [], isUndocumented: true, need: null, hasDoc: null });
     setStep(4);
+  };
+
+  const handleStepNavigation = (nextStep) => {
+    if (nextStep === 1) {
+      setData((prev) => ({ ...prev, isUndocumented: false }));
+      setSearchTerm('');
+      setHighlightedCountryIndex(0);
+    }
+
+    setStep(nextStep);
   };
 
   const result = step === 4 ? calculateRegistrationResult(data) : null;
 
-  const renderStep1 = () => (
-    <div className="space-y-6">
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
-          <input type="text" className="block w-full pl-10 pr-3 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm" placeholder="F.eks. Spania..." value={searchTerm} onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setHighlightedCountryIndex(0);
-          }} onKeyDown={handleSearchKeyDown} autoFocus />
-          {searchTerm && (
-            <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-              {filteredCountries.length > 0 ? (
-                filteredCountries.map((country, index) => (
-                  <button key={country.code} onClick={() => handleCountrySelect(country)} className={`w-full text-left px-4 py-3 transition-colors border-b last:border-0 flex justify-between items-center group ${highlightedCountryIndex === index ? 'bg-blue-50' : 'hover:bg-blue-50 focus:bg-blue-50'}`}>
-                    <span className="font-medium text-gray-800">{country.name}</span>
-                    <ChevronRight className={`h-4 w-4 ${highlightedCountryIndex === index ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500'}`} />
-                  </button>
-                ))
-              ) : (
-                <div className="px-4 py-3 text-gray-500">Fant ingen land i systemet. Prøv engelsk navn hvis norsk feiler.</div>
+  const renderStep1 = () => {
+    const showUndocumentedChoices = data.isUndocumented && !data.country;
+
+    return (
+      <div className="space-y-6">
+        {!showUndocumentedChoices && (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input type="text" className="block w-full pl-10 pr-3 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm" placeholder="F.eks. Spania..." value={searchTerm} onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setHighlightedCountryIndex(0);
+              }} onKeyDown={handleSearchKeyDown} autoFocus />
+              {searchTerm && (
+                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                  {filteredCountries.length > 0 ? (
+                    filteredCountries.map((country, index) => (
+                      <button key={country.code} onClick={() => handleCountrySelect(country)} className={`w-full text-left px-4 py-3 transition-colors border-b last:border-0 flex justify-between items-center group ${highlightedCountryIndex === index ? 'bg-blue-50' : 'hover:bg-blue-50 focus:bg-blue-50'}`}>
+                        <span className="font-medium text-gray-800">{country.name}</span>
+                        <ChevronRight className={`h-4 w-4 ${highlightedCountryIndex === index ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500'}`} />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-gray-500">Fant ingen land i systemet. Prøv engelsk navn hvis norsk feiler.</div>
+                  )}
+                </div>
               )}
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed">Skriv inn landet hvor pasienten har statsborgerskap eller trygdetilhørighet.<br />Dette danner grunnlaget for finansiering og registrering.</p>
+          </div>
+        )}
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          {!showUndocumentedChoices ? (
+            <button onClick={() => setData((prev) => ({ ...prev, country: null, circumstance: null, circumstances: [], isUndocumented: true, need: null, hasDoc: null }))} className="w-full flex items-center justify-between p-4 border border-gray-200 bg-gray-50 rounded-xl hover:bg-orange-50 hover:border-orange-200 transition-colors group">
+              <div className="flex items-center">
+                <div className="bg-red-100 group-hover:bg-red-200 p-2 rounded-lg mr-4 transition-colors">
+                  <span className="h-5 w-5 text-red-600 group-hover:text-red-700 transition-colors flex items-center justify-center font-bold text-base leading-none">?</span>
+                </div>
+                <div className="text-left">
+                  <span className="font-bold text-gray-800 group-hover:text-orange-900 block transition-colors">Ikke identifiserbar / Papirløs</span>
+                  <span className="text-sm text-gray-500 group-hover:text-orange-700 transition-colors">Gå til rutiner for pasient uten lovlig opphold eller ukjent ID</span>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <p className="font-bold text-orange-950 text-center">Papirløs / uten lovlig opphold</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button onClick={() => handleUnknownPatient(true)} className="w-full p-4 border border-green-200 bg-green-50 rounded-xl hover:bg-green-100 transition-colors text-left">
+                    <span className="font-bold text-green-900 block">Under 16 år</span>
+                  </button>
+                  <button onClick={() => handleUnknownPatient(false)} className="w-full p-4 border border-red-300 bg-red-100 rounded-xl hover:bg-red-200 transition-colors text-left">
+                    <span className="font-bold text-red-900 block">Over 18 år</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
-        <p className="text-sm text-slate-600 leading-relaxed">Skriv inn landet hvor pasienten har statsborgerskap eller trygdetilhørighet.<br />Dette danner grunnlaget for finansiering og registrering.</p>
       </div>
-      <div className="mt-8 pt-6 border-t border-gray-100">
-        <button onClick={handleUnknownPatient} className="w-full flex items-center justify-between p-4 border border-gray-200 bg-gray-50 rounded-xl hover:bg-orange-50 hover:border-orange-200 transition-colors group">
-          <div className="flex items-center">
-            <div className="bg-red-100 group-hover:bg-red-200 p-2 rounded-lg mr-4 transition-colors">
-              <span className="h-5 w-5 text-red-600 group-hover:text-red-700 transition-colors flex items-center justify-center font-bold text-base leading-none">?</span>
-            </div>
-            <div className="text-left">
-              <span className="font-bold text-gray-800 group-hover:text-orange-900 block transition-colors">Ikke identifiserbar / Papirløs</span>
-              <span className="text-sm text-gray-500 group-hover:text-orange-700 transition-colors">Gå til rutiner for pasient uten lovlig opphold eller ukjent ID</span>
-            </div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderStep2 = () => {
     if (!data.country) {
@@ -141,6 +203,8 @@ export default function RegistrationWizard() {
       'student_non_eu',
     ];
 
+    const selectedCircumstances = getSelectedCircumstances(data);
+
     const availableCircumstances = CIRCUMSTANCES.filter((circ) => {
       if (circ.id === 'asylum') {
         return data.country && data.country.zone !== 'EU_EOS';
@@ -158,33 +222,81 @@ export default function RegistrationWizard() {
       .map((id) => availableCircumstances.find((circ) => circ.id === id))
       .filter(Boolean);
 
-    const handleCircumstanceSelect = (circId) => {
-      updateData('circumstance', circId);
-      if (circId === 'worker' || circId === 'none' || circId === 'pregnancy' || circId === 'family_reunification' || circId === 'asylum') {
-        setStep(3);
-      } else {
+    const handleNoSpecialCircumstances = () => {
+      const nextData = {
+        ...data,
+        circumstance: null,
+        circumstances: [],
+        need: null,
+        hasDoc: null,
+      };
+
+      setData(nextData);
+
+      if (shouldSkipDocumentation(nextData)) {
         setStep(4);
+      } else {
+        setStep(3);
+      }
+    };
+
+    const toggleCircumstance = (circId) => {
+      if (circId === 'none') {
+        handleNoSpecialCircumstances();
+        return;
+      }
+
+      setData((prev) => {
+        const previousCircumstances = getSelectedCircumstances(prev);
+        const nextCircumstances = previousCircumstances.includes(circId)
+          ? previousCircumstances.filter((id) => id !== circId)
+          : [...previousCircumstances, circId];
+
+        return {
+          ...prev,
+          circumstance: nextCircumstances[0] || null,
+          circumstances: nextCircumstances,
+          need: null,
+          hasDoc: null,
+        };
+      });
+    };
+
+    const handleCircumstancesContinue = () => {
+      const nextData = {
+        ...data,
+        circumstance: selectedCircumstances[0] || null,
+        circumstances: selectedCircumstances,
+        need: null,
+        hasDoc: null,
+      };
+
+      setData(nextData);
+
+      if (shouldSkipDocumentation(nextData)) {
+        setStep(4);
+      } else {
+        setStep(3);
       }
     };
 
     return (
       <div className="space-y-6">
-        <div className="bg-gray-50 border p-4 rounded-lg mb-6 flex justify-between items-center">
+        <button onClick={() => setStep(1)} className="w-full bg-gray-50 border p-4 rounded-lg mb-6 flex justify-between items-center text-left hover:bg-blue-50 hover:border-blue-200 transition-colors">
           <div>
             <p className="text-xs text-gray-500 uppercase font-semibold">Valgt land</p>
             <p className="text-lg font-bold text-gray-800">{data.country.name}</p>
           </div>
-          <button onClick={() => setStep(1)} className="text-sm text-blue-600 hover:underline">Endre</button>
-        </div>
+          <span className="text-sm text-blue-600">Endre</span>
+        </button>
         {defaultCircumstance && (
           <div className="mt-4">
             <button
               key={defaultCircumstance.id}
-              onClick={() => handleCircumstanceSelect(defaultCircumstance.id)}
+              onClick={handleNoSpecialCircumstances}
               className="w-full text-left px-5 py-4 border border-gray-200 rounded-2xl bg-white hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 flex items-center justify-between group"
             >
               <span className="font-medium text-gray-700 group-hover:text-blue-700 leading-snug pr-4">{defaultCircumstance.label}</span>
-              <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
             </button>
           </div>
         )}
@@ -193,20 +305,23 @@ export default function RegistrationWizard() {
           {prioritizedCircumstances.map((circ) => (
             <button
               key={circ.id}
-              onClick={() => handleCircumstanceSelect(circ.id)}
-              className="w-full text-left px-5 py-4 border border-gray-200 rounded-2xl bg-gradient-to-r from-white to-slate-50 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 flex items-center justify-between group"
+              onClick={() => toggleCircumstance(circ.id)}
+              className={`w-full text-left px-5 py-4 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 flex items-center justify-between group ${selectedCircumstances.includes(circ.id) ? 'border-blue-400 bg-blue-50' : 'border-gray-200 bg-gradient-to-r from-white to-slate-50 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400'}`}
             >
               <span className="font-medium text-gray-700 group-hover:text-blue-700 leading-snug pr-4">{circ.label}</span>
-              <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+              {selectedCircumstances.includes(circ.id) ? <CheckCircle className="h-5 w-5 text-blue-500" /> : null}
             </button>
           ))}
         </div>
+        <button onClick={handleCircumstancesContinue} className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+          Gå videre
+        </button>
       </div>
     );
   };
 
   const renderStep3 = () => {
-    if (!data.country || !data.circumstance) {
+    if (!data.country || (!data.circumstance && getSelectedCircumstances(data).length === 0)) {
       return (
         <div className="text-center py-12">
           <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -220,7 +335,7 @@ export default function RegistrationWizard() {
     const documentationScenarioKey = getDocumentationScenario(data);
     const documentationScenario = documentationScenarioKey ? DOCUMENTATION_SCENARIOS[documentationScenarioKey] : null;
 
-    const showNeedSelector = data.country.zone === 'EU_EOS' && data.circumstance !== 'worker';
+    const showNeedSelector = data.country.zone === 'EU_EOS' && !hasCircumstance(data, 'worker') && !hasCircumstance(data, 'child');
 
     if (showNeedSelector && !data.need) {
       return (
@@ -245,12 +360,19 @@ export default function RegistrationWizard() {
       );
     }
 
-    const toggleDoc = (id) => setSelectedDocs(prev => prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]);
+    const toggleDoc = (id, groupDocuments = [], isSingleSelect = false) => setSelectedDocs((prev) => {
+      if (isSingleSelect) {
+        const docsOutsideGroup = prev.filter((doc) => !groupDocuments.includes(doc));
+        return [...docsOutsideGroup, id];
+      }
 
-    const CheckboxItem = ({ id, label, icon: Icon }) => (
+      return prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id];
+    });
+
+    const CheckboxItem = ({ id, label, icon: Icon, inputType = 'checkbox', groupDocuments = [], isSingleSelect = false }) => (
       <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-colors ${selectedDocs.includes(id) ? 'bg-blue-50 border-blue-500' : 'bg-white border-gray-200 hover:border-blue-300'}`}>
         <div className="flex-shrink-0 mr-4">
-          <input type="checkbox" className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer" checked={selectedDocs.includes(id)} onChange={() => toggleDoc(id)} />
+          <input type={inputType} name={isSingleSelect ? `doc-group-${groupDocuments.join('-')}` : id} className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer" checked={selectedDocs.includes(id)} onChange={() => toggleDoc(id, groupDocuments, isSingleSelect)} />
         </div>
         <div className="flex items-center flex-1">
           <Icon className={`h-6 w-6 mr-3 ${selectedDocs.includes(id) ? 'text-blue-600' : 'text-gray-400'}`} />
@@ -264,7 +386,7 @@ export default function RegistrationWizard() {
         <button onClick={() => { setStep(2); setSelectedDocs([]); }} className="flex items-center text-sm text-gray-500 hover:text-gray-800 mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" /> Tilbake
         </button>
-        {data.circumstance === 'family_reunification' && (
+        {hasCircumstance(data, 'family_reunification') && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -310,7 +432,7 @@ export default function RegistrationWizard() {
         <h2 className="text-xl font-bold text-gray-800">Påkrevd dokumentasjon</h2>
         <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm mt-4">
           <p className="text-gray-600 mb-6 text-sm">
-            {data.circumstance === 'worker' 
+            {hasCircumstance(data, 'worker') 
               ? 'For å registrere pasienten med norske rettigheter som arbeidstaker må følgende sjekkes:'
               : `For å registrere ${data.country.name} som trygdenasjon med riktig finansiering må følgende sjekkes:`}
           </p>
@@ -322,6 +444,8 @@ export default function RegistrationWizard() {
                   {group.documents.map((documentId) => {
                     const document = DOCUMENT_OPTIONS[documentId];
                     const Icon = DOCUMENT_ICONS[document.icon];
+                    const oneOfRequirements = documentationScenario?.requirements?.oneOf || [];
+                    const isSingleSelectGroup = group.documents.every((groupDocumentId) => oneOfRequirements.includes(groupDocumentId));
 
                     return (
                       <CheckboxItem
@@ -329,6 +453,9 @@ export default function RegistrationWizard() {
                         id={documentId}
                         label={document.label}
                         icon={Icon}
+                        inputType={isSingleSelectGroup ? 'radio' : 'checkbox'}
+                        groupDocuments={group.documents}
+                        isSingleSelect={isSingleSelectGroup}
                       />
                     );
                   })}
@@ -370,6 +497,7 @@ export default function RegistrationWizard() {
       return (
         <div className="text-center py-12">
           <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+
           <h2 className="text-xl font-bold text-gray-700 mb-2">Ingen fasit tilgjengelig enda</h2>
           <p className="text-gray-500 mb-6">Du må fullføre de tidligere stegene for at systemet skal kunne beregne DIPS-registreringen.</p>
         </div>
@@ -378,6 +506,19 @@ export default function RegistrationWizard() {
 
     const bgColors = { success: 'bg-green-50 border-green-200', warning: 'bg-orange-50 border-orange-200', error: 'bg-red-50 border-red-200' };
     const iconColors = { success: <CheckCircle className="h-8 w-8 text-green-600" />, warning: <AlertTriangle className="h-8 w-8 text-orange-600" />, error: <AlertCircle className="h-8 w-8 text-red-600" /> };
+    const handlingItems = result.handling
+      .split(/(?<=\.)\s+/)
+      .filter(Boolean)
+      .reduce((items, item) => {
+        if (/^Dette kan være\b/.test(item) && items.length > 0) {
+          const previousItem = items[items.length - 1];
+          items[items.length - 1] = { ...previousItem, detail: item };
+          return items;
+        }
+
+        items.push({ text: item, detail: '' });
+        return items;
+      }, []);
 
     return (
       <div className="space-y-6">
@@ -406,7 +547,23 @@ export default function RegistrationWizard() {
             </div>
             <div className="pt-4 border-t border-gray-100">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Krav til dokumentasjon / Handling</p>
-              <p className="text-gray-800 bg-yellow-50 p-3 rounded-lg border border-yellow-100 break-words">{result.handling}</p>
+              <div className="text-gray-800 bg-yellow-50 p-3 rounded-lg border border-yellow-100 break-words">
+                {handlingItems.length > 1 ? (
+                  <ul className="space-y-2">
+                    {handlingItems.map((item) => (
+                      <li key={item.text} className="flex items-start gap-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
+                        <span>
+                          <span className="block">{item.text}</span>
+                          {item.detail && <span className="block mt-1">{item.detail}</span>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>{result.handling}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -432,7 +589,7 @@ export default function RegistrationWizard() {
             <div className="flex items-start">
               {STEPS.map((s, index) => (
                 <React.Fragment key={s.id}>
-                  <button onClick={() => setStep(s.id)} title={`Gå til fase ${s.id}: ${s.label}`} className="flex flex-col items-center focus:outline-none group cursor-pointer w-16 sm:w-20 md:w-24 flex-shrink-0 min-w-0">
+                  <button onClick={() => handleStepNavigation(s.id)} title={`Gå til fase ${s.id}: ${s.label}`} className="flex flex-col items-center focus:outline-none group cursor-pointer w-16 sm:w-20 md:w-24 flex-shrink-0 min-w-0">
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ${step === s.id ? 'ring-4 ring-blue-200 bg-blue-600 text-white shadow-lg' : ''} ${step > s.id ? 'bg-blue-600 text-white shadow-md' : step < s.id ? 'bg-white text-gray-400 border-2 border-gray-200 group-hover:border-blue-400' : ''}`}>
                       {step > s.id && s.id !== 4 ? <CheckCircle className="h-4 w-4" /> : s.id}
                     </div>
