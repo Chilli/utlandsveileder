@@ -17,6 +17,7 @@ export default function RegistrationWizard() {
   const [step, setStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDocs, setSelectedDocs] = useState([]);
+  const [highlightedCountryIndex, setHighlightedCountryIndex] = useState(0);
   
   const [data, setData] = useState({
     country: null,
@@ -30,6 +31,23 @@ export default function RegistrationWizard() {
     return COUNTRIES.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [searchTerm]);
 
+  const handleSearchKeyDown = (e) => {
+    if (!filteredCountries.length) {
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedCountryIndex((prev) => (prev + 1) % filteredCountries.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedCountryIndex((prev) => (prev - 1 + filteredCountries.length) % filteredCountries.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      handleCountrySelect(filteredCountries[highlightedCountryIndex]);
+    }
+  };
+
   const updateData = (key, value) => {
     setData(prev => ({ ...prev, [key]: value }));
   };
@@ -37,6 +55,7 @@ export default function RegistrationWizard() {
   const handleCountrySelect = (country) => {
     updateData('country', country);
     setSearchTerm(country.name);
+    setHighlightedCountryIndex(0);
     setTimeout(() => setStep(2), 150);
   };
 
@@ -44,6 +63,7 @@ export default function RegistrationWizard() {
     setStep(1);
     setSearchTerm('');
     setSelectedDocs([]);
+    setHighlightedCountryIndex(0);
     setData({ country: null, circumstance: null, need: null, hasDoc: null });
   };
 
@@ -62,14 +82,17 @@ export default function RegistrationWizard() {
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
-          <input type="text" className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg shadow-sm" placeholder="F.eks. Spania..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} autoFocus />
+          <input type="text" className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg shadow-sm" placeholder="F.eks. Spania..." value={searchTerm} onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setHighlightedCountryIndex(0);
+          }} onKeyDown={handleSearchKeyDown} autoFocus />
           {searchTerm && (
             <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
               {filteredCountries.length > 0 ? (
-                filteredCountries.map((country) => (
-                  <button key={country.code} onClick={() => handleCountrySelect(country)} className="w-full text-left px-4 py-3 hover:bg-blue-50 focus:bg-blue-50 transition-colors border-b last:border-0 flex justify-between items-center group">
+                filteredCountries.map((country, index) => (
+                  <button key={country.code} onClick={() => handleCountrySelect(country)} className={`w-full text-left px-4 py-3 transition-colors border-b last:border-0 flex justify-between items-center group ${highlightedCountryIndex === index ? 'bg-blue-50' : 'hover:bg-blue-50 focus:bg-blue-50'}`}>
                     <span className="font-medium text-gray-800">{country.name}</span>
-                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-blue-500" />
+                    <ChevronRight className={`h-4 w-4 ${highlightedCountryIndex === index ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500'}`} />
                   </button>
                 ))
               ) : (
@@ -145,10 +168,10 @@ export default function RegistrationWizard() {
                   setStep(4);
                 }
               }}
-              className="w-full text-left px-5 py-4 border border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm flex items-center justify-between group"
+              className="w-full text-left px-5 py-4 border border-gray-200 rounded-2xl bg-gradient-to-r from-white to-slate-50 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 flex items-center justify-between group"
             >
-              <span className="font-medium text-gray-700 group-hover:text-blue-700">{circ.label}</span>
-              <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500" />
+              <span className="font-medium text-gray-700 group-hover:text-blue-700 leading-snug pr-4">{circ.label}</span>
+              <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
             </button>
           ))}
         </div>
@@ -327,27 +350,31 @@ export default function RegistrationWizard() {
   };
 
   return (
-    <div className="flex flex-col items-center py-12 px-4 font-sans text-gray-900">
+    <div className="flex flex-col items-center py-3 sm:py-6 md:py-10 px-3 sm:px-4 font-sans text-gray-900">
       <div className="w-full max-w-2xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-extrabold text-blue-900 mb-2">Utlandspasient-veileder</h1>
-          <p className="text-gray-500">Beslutningsstøtte for riktig registrering i DIPS</p>
+        <div className="mb-2 sm:mb-4 md:mb-6 text-center">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-blue-900">Utlandsveileder</h1>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-8 min-h-[400px]">
-          <div className="relative mb-12">
-            <div className="absolute left-0 top-4 transform -translate-y-1/2 w-full h-1 bg-gray-200 -z-10 rounded-full"></div>
-            <div className="absolute left-0 top-4 transform -translate-y-1/2 h-1 bg-blue-500 -z-10 rounded-full transition-all duration-500" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
-            <div className="flex items-start justify-between">
-              {STEPS.map((s) => (
-                <button key={s.id} onClick={() => setStep(s.id)} title={`Gå til fase ${s.id}: ${s.label}`} className="flex flex-col items-center focus:outline-none group cursor-pointer w-24">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ${step === s.id ? 'ring-4 ring-blue-200 bg-blue-600 text-white' : ''} ${step > s.id ? 'bg-blue-600 text-white shadow-md' : step < s.id ? 'bg-white text-gray-400 border-2 border-gray-200 group-hover:border-blue-400' : ''}`}>
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-4 sm:p-6 md:p-8 min-h-[400px]">
+          <div className="relative mb-8 sm:mb-10 md:mb-12">
+            <div className="flex items-start">
+              {STEPS.map((s, index) => (
+                <React.Fragment key={s.id}>
+                  <button onClick={() => setStep(s.id)} title={`Gå til fase ${s.id}: ${s.label}`} className="flex flex-col items-center focus:outline-none group cursor-pointer w-20 sm:w-24 flex-shrink-0">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ${step === s.id ? 'ring-4 ring-blue-200 bg-blue-600 text-white shadow-lg' : ''} ${step > s.id ? 'bg-blue-600 text-white shadow-md' : step < s.id ? 'bg-white text-gray-400 border-2 border-gray-200 group-hover:border-blue-400' : ''}`}>
                     {step > s.id && s.id !== 4 ? <CheckCircle className="h-4 w-4" /> : s.id}
                   </div>
                   <div className={`mt-3 text-xs md:text-sm font-semibold text-center transition-colors duration-300 ${step === s.id ? 'text-blue-700' : step > s.id ? 'text-gray-700' : 'text-gray-400 group-hover:text-blue-500'}`}>
                     {s.label}
                   </div>
-                </button>
+                  </button>
+                  {index < STEPS.length - 1 && (
+                    <div className="flex-1 mt-4 px-1 sm:px-2">
+                      <div className={`h-1.5 rounded-full transition-colors duration-500 ${step > s.id ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-slate-200'}`}></div>
+                    </div>
+                  )}
+                </React.Fragment>
               ))}
             </div>
           </div>
