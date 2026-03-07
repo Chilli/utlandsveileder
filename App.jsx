@@ -76,18 +76,17 @@ export default function RegistrationWizard() {
 
   const renderStep1 = () => (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Søk etter pasientens hjemland (Trygdenasjon)</label>
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
-          <input type="text" className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg shadow-sm" placeholder="F.eks. Spania..." value={searchTerm} onChange={(e) => {
+          <input type="text" className="block w-full pl-10 pr-3 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base shadow-sm" placeholder="F.eks. Spania..." value={searchTerm} onChange={(e) => {
             setSearchTerm(e.target.value);
             setHighlightedCountryIndex(0);
           }} onKeyDown={handleSearchKeyDown} autoFocus />
           {searchTerm && (
-            <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+            <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
               {filteredCountries.length > 0 ? (
                 filteredCountries.map((country, index) => (
                   <button key={country.code} onClick={() => handleCountrySelect(country)} className={`w-full text-left px-4 py-3 transition-colors border-b last:border-0 flex justify-between items-center group ${highlightedCountryIndex === index ? 'bg-blue-50' : 'hover:bg-blue-50 focus:bg-blue-50'}`}>
@@ -101,16 +100,13 @@ export default function RegistrationWizard() {
             </div>
           )}
         </div>
-      </div>
-      <div className="bg-blue-50 p-4 rounded-lg flex items-start space-x-3 text-sm text-blue-800">
-        <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-        <p>Skriv inn landet hvor pasienten har statsborgerskap eller trygdetilhørighet. Dette danner grunnlaget for finansieringen.</p>
+        <p className="text-sm text-slate-600 leading-relaxed">Skriv inn landet hvor pasienten har statsborgerskap eller trygdetilhørighet.<br />Dette danner grunnlaget for finansiering og registrering.</p>
       </div>
       <div className="mt-8 pt-6 border-t border-gray-100">
         <button onClick={handleUnknownPatient} className="w-full flex items-center justify-between p-4 border border-gray-200 bg-gray-50 rounded-xl hover:bg-orange-50 hover:border-orange-200 transition-colors group">
           <div className="flex items-center">
-            <div className="bg-gray-200 group-hover:bg-orange-200 p-2 rounded-lg mr-4 transition-colors">
-              <AlertCircle className="h-5 w-5 text-gray-600 group-hover:text-orange-600 transition-colors" />
+            <div className="bg-red-100 group-hover:bg-red-200 p-2 rounded-lg mr-4 transition-colors">
+              <span className="h-5 w-5 text-red-600 group-hover:text-red-700 transition-colors flex items-center justify-center font-bold text-base leading-none">?</span>
             </div>
             <div className="text-left">
               <span className="font-bold text-gray-800 group-hover:text-orange-900 block transition-colors">Ikke identifiserbar / Papirløs</span>
@@ -135,6 +131,42 @@ export default function RegistrationWizard() {
       );
     }
 
+    const circumstanceOrder = [
+      'pregnancy',
+      'family_reunification',
+      'asylum',
+      'worker',
+      'child',
+      'prisoner',
+      'student_non_eu',
+    ];
+
+    const availableCircumstances = CIRCUMSTANCES.filter((circ) => {
+      if (circ.id === 'asylum') {
+        return data.country && data.country.zone !== 'EU_EOS';
+      }
+
+      if (circ.id === 'family_reunification') {
+        return data.country && data.country.zone !== 'EU_EOS';
+      }
+
+      return true;
+    });
+
+    const defaultCircumstance = availableCircumstances.find((circ) => circ.id === 'none');
+    const prioritizedCircumstances = circumstanceOrder
+      .map((id) => availableCircumstances.find((circ) => circ.id === id))
+      .filter(Boolean);
+
+    const handleCircumstanceSelect = (circId) => {
+      updateData('circumstance', circId);
+      if (circId === 'worker' || circId === 'none' || circId === 'pregnancy' || circId === 'family_reunification' || circId === 'asylum') {
+        setStep(3);
+      } else {
+        setStep(4);
+      }
+    };
+
     return (
       <div className="space-y-6">
         <div className="bg-gray-50 border p-4 rounded-lg mb-6 flex justify-between items-center">
@@ -144,30 +176,24 @@ export default function RegistrationWizard() {
           </div>
           <button onClick={() => setStep(1)} className="text-sm text-blue-600 hover:underline">Endre</button>
         </div>
-        <h2 className="text-xl font-bold text-gray-800">Spesielle omstendigheter</h2>
-        <p className="text-gray-600">Gjelder noen av følgende situasjoner for pasienten?</p>
-        <div className="grid gap-3 mt-4">
-          {CIRCUMSTANCES.filter((circ) => {
-            if (circ.id === 'asylum') {
-              return data.country && data.country.zone !== 'EU_EOS';
-            }
-
-            if (circ.id === 'family_reunification') {
-              return data.country && data.country.zone !== 'EU_EOS';
-            }
-
-            return true;
-          }).map((circ) => (
+        {defaultCircumstance && (
+          <div className="mt-4">
+            <button
+              key={defaultCircumstance.id}
+              onClick={() => handleCircumstanceSelect(defaultCircumstance.id)}
+              className="w-full text-left px-5 py-4 border border-gray-200 rounded-2xl bg-white hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 flex items-center justify-between group"
+            >
+              <span className="font-medium text-gray-700 group-hover:text-blue-700 leading-snug pr-4">{defaultCircumstance.label}</span>
+              <ChevronRight className="h-5 w-5 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+            </button>
+          </div>
+        )}
+        <div className="pt-5 border-t border-gray-200 space-y-3">
+          <p className="text-gray-600 text-center">Gjelder noen av følgende situasjoner for pasienten?</p>
+          {prioritizedCircumstances.map((circ) => (
             <button
               key={circ.id}
-              onClick={() => {
-                updateData('circumstance', circ.id);
-                if (circ.id === 'worker' || circ.id === 'none' || circ.id === 'pregnancy' || circ.id === 'family_reunification' || circ.id === 'asylum') {
-                  setStep(3);
-                } else {
-                  setStep(4);
-                }
-              }}
+              onClick={() => handleCircumstanceSelect(circ.id)}
               className="w-full text-left px-5 py-4 border border-gray-200 rounded-2xl bg-gradient-to-r from-white to-slate-50 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 flex items-center justify-between group"
             >
               <span className="font-medium text-gray-700 group-hover:text-blue-700 leading-snug pr-4">{circ.label}</span>
@@ -238,6 +264,26 @@ export default function RegistrationWizard() {
         <button onClick={() => { setStep(2); setSelectedDocs([]); }} className="flex items-center text-sm text-gray-500 hover:text-gray-800 mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" /> Tilbake
         </button>
+        {data.circumstance === 'family_reunification' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="space-y-2 text-sm text-amber-950">
+                <p className="font-bold">Viktig ved familiegjenforening / familieinnvandring</p>
+                <p>
+                  Dersom pasienten oppholder seg i Norge mens søknad om familieinnvandring behandles, har pasienten som hovedregel
+                  ikke helserettigheter i Norge ennå.
+                </p>
+                <p>
+                  Det betyr at pasienten normalt bare har rett til øyeblikkelig hjelp, og skal ellers registreres som selvbetalende.
+                </p>
+                <p>
+                  Dette gjelder også dersom pasienten er gravid. Graviditet i seg selv gir ikke dekning fra Norge mens søknaden fortsatt er til behandling.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {showNeedSelector && (
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt eller planlagt helsehjelp?</h2>

@@ -100,10 +100,10 @@ export function calculateResult(data) {
       type: hasDoc === true ? 'warning' : 'error',
       trygdenasjon: country ? country.name : 'Ukjent',
       finansiering: 'Selvbetalende',
-      beskrivelse: 'Pasienter med familiegjenforening/familieinnvandring fra land utenfor EU/EØS registreres som selvbetalende.',
+      beskrivelse: 'Pasienter som oppholder seg i Norge mens søknad om familiegjenforening/familieinnvandring behandles, har som hovedregel ikke helserettigheter i Norge ennå og registreres derfor som selvbetalende. Kun øyeblikkelig hjelp dekkes.',
       handling: hasDoc === true
-        ? 'Kopier fremvist legitimasjon og dokumentasjon for adresse/tilhørighet. Pasienten registreres som selvbetalende.'
-        : 'Pasienten registreres som selvbetalende. Innhent legitimasjon og adresseopplysninger så snart som mulig for korrekt registrering og fakturagrunnlag.'
+        ? 'Kopier fremvist legitimasjon og dokumentasjon for adresse/tilhørighet. Pasienten registreres som selvbetalende. Merk at graviditet i seg selv ikke gir dekning fra Norge mens søknaden fortsatt er til behandling.'
+        : 'Pasienten registreres som selvbetalende. Innhent legitimasjon og adresseopplysninger så snart som mulig for korrekt registrering og fakturagrunnlag. Merk at graviditet i seg selv ikke gir dekning fra Norge mens søknaden fortsatt er til behandling.'
     };
   } else if (circumstance === 'asylum') {
     if (hasDoc === true) {

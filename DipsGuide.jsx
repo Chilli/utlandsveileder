@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
-import { Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { IdCard, Wallet, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function DipsGuide({ trygdenasjon }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isFinancingOpen, setIsFinancingOpen] = useState(false);
 
   return (
-    <div className="mt-8 border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 transition-colors"
-      >
-        <span className="font-bold text-gray-800 flex items-center">
-          <Info className="h-5 w-5 mr-3 text-blue-600" />
-          Vis veiledning for felter i DIPS
-        </span>
-        {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
-      </button>
+    <div className="mt-8 space-y-4">
+      <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full flex items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 transition-colors"
+        >
+          <span className="font-bold text-gray-800 flex items-center">
+            <IdCard className="h-5 w-5 mr-3 text-blue-600" />
+            Veiledning for felter i DIPS Personopplysninger
+          </span>
+          {isOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+        </button>
 
-      {isOpen && (
-        <div className="p-6 bg-white space-y-8 border-t border-gray-200 text-sm">
+        {isOpen && (
+          <div className="p-6 bg-white space-y-8 border-t border-gray-200 text-sm">
           <section>
             <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">Adresse</h3>
             <div className="bg-blue-50 text-blue-800 p-4 rounded-xl mb-6 shadow-sm border border-blue-100">
@@ -121,8 +123,26 @@ export default function DipsGuide({ trygdenasjon }) {
               </div>
             </div>
           </section>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
+
+      <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+        <button
+          onClick={() => setIsFinancingOpen(!isFinancingOpen)}
+          className="w-full flex items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 transition-colors"
+        >
+          <span className="font-bold text-gray-800 flex items-center">
+            <Wallet className="h-5 w-5 mr-3 text-blue-600" />
+            Veiledning for felter i DIPS Pasientfinansiering
+          </span>
+          {isFinancingOpen ? <ChevronUp className="h-5 w-5 text-gray-500" /> : <ChevronDown className="h-5 w-5 text-gray-500" />}
+        </button>
+
+        {isFinancingOpen && (
+          <div className="p-6 bg-white border-t border-gray-200" />
+        )}
+      </div>
     </div>
   );
 }

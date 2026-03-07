@@ -43,12 +43,12 @@ export const COUNTRIES = [
 
 export const CIRCUMSTANCES = [
   { id: 'none', label: 'Ingen spesielle omstendigheter' },
-  { id: 'worker', label: 'Arbeidstaker i Norge (skatter til Norge)' },
+  { id: 'worker', label: 'Arbeidstaker i Norge' },
   { id: 'pregnancy', label: 'Svangerskap' },
   { id: 'family_reunification', label: 'Familiegjenforening (Familieinnvandring)' },
   { id: 'asylum', label: 'Asylsøker / Flyktning' },
   { id: 'child', label: 'Barn under 16 år' },
-  { id: 'prisoner', label: 'Innsatt i norsk fengsel' },
+  { id: 'prisoner', label: 'Innsatt' },
   { id: 'student_outside', label: 'Student fra land utenfor EØS' },
 ];
 
