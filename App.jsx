@@ -194,7 +194,9 @@ export default function RegistrationWizard() {
     const documentationScenarioKey = getDocumentationScenario(data);
     const documentationScenario = documentationScenarioKey ? DOCUMENTATION_SCENARIOS[documentationScenarioKey] : null;
 
-    if (data.country.zone === 'EU_EOS' && !data.need && data.circumstance !== 'worker') {
+    const showNeedSelector = data.country.zone === 'EU_EOS' && data.circumstance !== 'worker';
+
+    if (showNeedSelector && !data.need) {
       return (
         <div className="space-y-6">
           <button onClick={() => setStep(2)} className="flex items-center text-sm text-gray-500 hover:text-gray-800 mb-4">
@@ -236,6 +238,29 @@ export default function RegistrationWizard() {
         <button onClick={() => { setStep(2); setSelectedDocs([]); }} className="flex items-center text-sm text-gray-500 hover:text-gray-800 mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" /> Tilbake
         </button>
+        {showNeedSelector && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt eller planlagt helsehjelp?</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => updateData('need', 'acute')}
+                className={`p-6 border-2 rounded-xl text-center transition-all group ${data.need === 'acute' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'}`}
+              >
+                <HeartPulse className="h-10 w-10 mx-auto text-red-500 mb-3 group-hover:scale-110 transition-transform" />
+                <span className="font-bold text-gray-800 block text-lg">Akutt (Nødvendig)</span>
+                <span className="text-xs text-gray-500 mt-1 block">Helsehjelp som ikke kan vente til pasienten reiser hjem</span>
+              </button>
+              <button
+                onClick={() => updateData('need', 'planned')}
+                className={`p-6 border-2 rounded-xl text-center transition-all group ${data.need === 'planned' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'}`}
+              >
+                <CalendarCheck className="h-10 w-10 mx-auto text-blue-500 mb-3 group-hover:scale-110 transition-transform" />
+                <span className="font-bold text-gray-800 block text-lg">Planlagt behandling</span>
+                <span className="text-xs text-gray-500 mt-1 block">Pasienten har reist hit formelt for behandling</span>
+              </button>
+            </div>
+          </div>
+        )}
         <h2 className="text-xl font-bold text-gray-800">Påkrevd dokumentasjon</h2>
         <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm mt-4">
           <p className="text-gray-600 mb-6 text-sm">
