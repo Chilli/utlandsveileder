@@ -356,21 +356,21 @@ export default function RegistrationWizard() {
           <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-blue-900">Utlandsveileder</h1>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-4 sm:p-6 md:p-8 min-h-[400px]">
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-4 sm:p-6 md:p-8 min-h-[400px] overflow-hidden">
           <div className="relative mb-8 sm:mb-10 md:mb-12">
             <div className="flex items-start">
               {STEPS.map((s, index) => (
                 <React.Fragment key={s.id}>
-                  <button onClick={() => setStep(s.id)} title={`Gå til fase ${s.id}: ${s.label}`} className="flex flex-col items-center focus:outline-none group cursor-pointer w-20 sm:w-24 flex-shrink-0">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ${step === s.id ? 'ring-4 ring-blue-200 bg-blue-600 text-white shadow-lg' : ''} ${step > s.id ? 'bg-blue-600 text-white shadow-md' : step < s.id ? 'bg-white text-gray-400 border-2 border-gray-200 group-hover:border-blue-400' : ''}`}>
-                    {step > s.id && s.id !== 4 ? <CheckCircle className="h-4 w-4" /> : s.id}
-                  </div>
-                  <div className={`mt-3 text-xs md:text-sm font-semibold text-center transition-colors duration-300 ${step === s.id ? 'text-blue-700' : step > s.id ? 'text-gray-700' : 'text-gray-400 group-hover:text-blue-500'}`}>
-                    {s.label}
-                  </div>
+                  <button onClick={() => setStep(s.id)} title={`Gå til fase ${s.id}: ${s.label}`} className="flex flex-col items-center focus:outline-none group cursor-pointer w-16 sm:w-20 md:w-24 flex-shrink-0 min-w-0">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ${step === s.id ? 'ring-4 ring-blue-200 bg-blue-600 text-white shadow-lg' : ''} ${step > s.id ? 'bg-blue-600 text-white shadow-md' : step < s.id ? 'bg-white text-gray-400 border-2 border-gray-200 group-hover:border-blue-400' : ''}`}>
+                      {step > s.id && s.id !== 4 ? <CheckCircle className="h-4 w-4" /> : s.id}
+                    </div>
+                    <div className={`mt-2 text-[10px] sm:text-xs md:text-sm font-semibold text-center leading-tight transition-colors duration-300 break-words ${step === s.id ? 'text-blue-700' : step > s.id ? 'text-gray-700' : 'text-gray-400 group-hover:text-blue-500'}`}>
+                      {s.label}
+                    </div>
                   </button>
                   {index < STEPS.length - 1 && (
-                    <div className="flex-1 mt-4 px-1 sm:px-2">
+                    <div className="flex-1 mt-4 px-0.5 sm:px-1 md:px-2 min-w-0">
                       <div className={`h-1.5 rounded-full transition-colors duration-500 ${step > s.id ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-slate-200'}`}></div>
                     </div>
                   )}
