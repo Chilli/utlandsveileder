@@ -322,20 +322,20 @@ export default function RegistrationWizard() {
           <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm space-y-4">
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Registreres i DIPS som</p>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <span className="block text-xs text-gray-500 mb-1">Trygdenasjon</span>
-                  <span className="font-bold text-gray-800">{result.trygdenasjon}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 min-w-0 overflow-hidden">
+                  <span className="block text-xs text-gray-500 mb-1 break-words">Trygdenasjon</span>
+                  <span className="block font-bold text-gray-800 break-words">{result.trygdenasjon}</span>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                  <span className="block text-xs text-gray-500 mb-1">Finansieringskategori</span>
-                  <span className="font-bold text-gray-800">{result.finansiering.split('/')[0].trim()}</span>
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 min-w-0 overflow-hidden">
+                  <span className="block text-xs text-gray-500 mb-1 break-words">Finansieringskategori</span>
+                  <span className="block font-bold text-gray-800 break-words">{result.finansiering.split('/')[0].trim()}</span>
                 </div>
               </div>
             </div>
             <div className="pt-4 border-t border-gray-100">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Krav til dokumentasjon / Handling</p>
-              <p className="text-gray-800 bg-yellow-50 p-3 rounded-lg border border-yellow-100">{result.handling}</p>
+              <p className="text-gray-800 bg-yellow-50 p-3 rounded-lg border border-yellow-100 break-words">{result.handling}</p>
             </div>
           </div>
         </div>
