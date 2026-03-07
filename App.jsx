@@ -424,7 +424,7 @@ export default function RegistrationWizard() {
     <div className="flex flex-col items-center py-3 sm:py-6 md:py-10 px-3 sm:px-4 font-sans text-gray-900">
       <div className="w-full max-w-2xl">
         <div className="mb-2 sm:mb-4 md:mb-6 text-center">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-blue-900">Utlandsveileder</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-blue-900">Veileder for helserettigheter</h1>
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-4 sm:p-6 md:p-8 min-h-[400px] overflow-hidden">
