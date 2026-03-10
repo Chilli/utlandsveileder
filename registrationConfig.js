@@ -48,7 +48,7 @@ export const CIRCUMSTANCES = [
   { id: 'family_reunification', label: 'Familiegjenforening (Familieinnvandring)' },
   { id: 'asylum', label: 'Asylsøker / Flyktning' },
   { id: 'child', label: 'Pasient under 16 år' },
-  { id: 'prisoner', label: 'Innsatt' },
+  { id: 'prisoner', label: 'Innsatt i fengsel' },
   { id: 'student_outside', label: 'Student fra land utenfor EØS' },
 ];
 

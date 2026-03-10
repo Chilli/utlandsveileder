@@ -1,19 +1,19 @@
 import { DOCUMENTATION_SCENARIOS } from './registrationConfig.js';
 
- function getSelectedCircumstances(data) {
-   return data?.circumstances || (data?.circumstance ? [data.circumstance] : []);
- }
+function getSelectedCircumstances(data) {
+  return data?.circumstances || (data?.circumstance ? [data.circumstance] : []);
+}
 
- function hasCircumstance(data, circumstanceId) {
-   return getSelectedCircumstances(data).includes(circumstanceId);
- }
+function hasCircumstance(data, circumstanceId) {
+  return getSelectedCircumstances(data).includes(circumstanceId);
+}
 
 export function getDocumentationScenario(data) {
   if (data?.isUndocumented) {
     return null;
   }
 
-  if (!data.country || getSelectedCircumstances(data).length === 0) {
+  if (!data.country || (getSelectedCircumstances(data).length === 0 && !data?.circumstance)) {
     return null;
   }
 

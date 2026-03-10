@@ -225,7 +225,7 @@ export default function RegistrationWizard() {
     const handleNoSpecialCircumstances = () => {
       const nextData = {
         ...data,
-        circumstance: null,
+        circumstance: 'none',
         circumstances: [],
         need: null,
         hasDoc: null,
@@ -321,7 +321,7 @@ export default function RegistrationWizard() {
   };
 
   const renderStep3 = () => {
-    if (!data.country || (!data.circumstance && getSelectedCircumstances(data).length === 0)) {
+    if (!data.country || (getSelectedCircumstances(data).length === 0 && !data.circumstance)) {
       return (
         <div className="text-center py-12">
           <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
