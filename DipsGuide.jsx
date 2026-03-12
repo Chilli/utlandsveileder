@@ -240,11 +240,13 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
           </div>
         </div>
 
-        <div className="mt-5 bg-white border border-gray-200 rounded-2xl p-4">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">EHIC-kort (feltoversikt)</p>
+        <div className="mt-5 -mx-5 bg-white border border-gray-200 rounded-2xl overflow-hidden">
+          <div className="px-5 pt-4 pb-0">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">EHIC-kort (feltoversikt)</p>
+          </div>
 
-          <div className="w-full max-w-3xl mx-auto">
-            <div className="relative overflow-hidden rounded-2xl border border-slate-300 bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 p-4 sm:p-6">
+          <div className="w-full">
+            <div className="relative overflow-hidden border-t border-slate-200 bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 p-4 sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="text-white/90">
                   <div className="text-[10px] sm:text-xs uppercase tracking-wider">European Health Insurance Card</div>
