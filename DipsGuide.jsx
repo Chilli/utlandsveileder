@@ -166,6 +166,18 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
   const financingContent = (
     <div className="p-5 bg-white border-t border-gray-200 space-y-5 text-sm">
       <div className="bg-blue-50 text-blue-800 p-4 rounded-xl shadow-sm border border-blue-100">
+        <p className="mb-2">
+          Trykk{' '}
+          <a
+            href="https://employment-social-affairs.ec.europa.eu/policies-and-activities/moving-working-europe/eu-social-security-coordination/european-health-insurance-card/how-recognise-card_en"
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-blue-700 underline hover:text-blue-800"
+          >
+            her
+          </a>
+          {' '}for eksempler på EHIC kort.
+        </p>
         <p>
           Gyldig fra og med* skal helst være dato kortet er fremvist. Dette fordi fra dato er ulikt per land og fremkommer ikke alltid på kortet. Dersom kortet har en slutt-dato kan du ofte beregne fra-dato ved å trekke fra standard gyldighet for landet. Dette kan utføres i feltet under (Det er lagt inn en database med typisk gyldighetsdato for hvert land). Blir fra dato{' '}
           <span className="text-red-700 font-bold">rød</span>
@@ -321,9 +333,11 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
   );
 
   return (
-    <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+    <div id="dips-pasientfinansiering-guide" className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white">
       <button
         onClick={() => setIsFinancingModalOpen(true)}
+        aria-expanded={isFinancingModalOpen}
+        data-financing-guide-toggle="mobile"
         className="sm:hidden w-full flex items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 transition-colors"
       >
         <span className="font-bold text-gray-800 flex items-center">
@@ -335,6 +349,8 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
 
       <button
         onClick={() => setIsFinancingOpen(!isFinancingOpen)}
+        aria-expanded={isFinancingOpen}
+        data-financing-guide-toggle="desktop"
         className="hidden sm:flex w-full items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 transition-colors"
       >
         <span className="font-bold text-gray-800 flex items-center">

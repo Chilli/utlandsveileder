@@ -638,6 +638,23 @@ export default function RegistrationWizard() {
       return items;
     }, []);
 
+    const openFinancingGuide = () => {
+      window.requestAnimationFrame(() => {
+        const container = document.getElementById('dips-pasientfinansiering-guide');
+        if (!container) {
+          return;
+        }
+
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        const isMobile = window.innerWidth < 640;
+        const toggle = container.querySelector(`[data-financing-guide-toggle="${isMobile ? 'mobile' : 'desktop'}"]`);
+        if (toggle && typeof toggle.click === 'function') {
+          toggle.click();
+        }
+      });
+    };
+
     return (
       <div className="space-y-6">
         {isPrcModalOpen && (
@@ -709,6 +726,24 @@ export default function RegistrationWizard() {
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Praktisk informasjon</p>
               <div className="text-gray-800 bg-yellow-50 p-3 rounded-lg border border-yellow-100 break-words">
                 <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
+                    <span>
+                      <span className="block">
+                        Registrer EHIC i DIPS i henhold til lokale rutiner. For veiledning og eksempler på EHIC kort naviger til{' '}
+                        <button type="button" onClick={openFinancingGuide} className="font-semibold text-blue-700 underline hover:text-blue-800">
+                          Veiledning for felter i DIPS Pasientfinansiering
+                        </button>
+                        .
+                      </span>
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
+                    <span>
+                      <span className="block">Ta kopi av EHIC (Bakside og fremside)</span>
+                    </span>
+                  </li>
                   {handlingItems.map((item) => (
                     <li key={item.text} className="flex items-start gap-2">
                       <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
