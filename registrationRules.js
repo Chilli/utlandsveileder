@@ -1,5 +1,98 @@
 import { DOCUMENTATION_SCENARIOS } from './registrationConfig.js';
 
+const normalizeCountryName = (name) => (name || '').trim().toLowerCase();
+
+const EHIC_VALIDITY_YEARS_BY_COUNTRY = {
+  belgia: { years: 2, notes: '' },
+  bulgaria: { years: 1, notes: '' },
+  danmark: { years: 5, notes: '' },
+  estland: { years: 3, notes: '' },
+  finland: { years: 5, notes: 'Tidligere 2 år, men ble utvidet til 5 år fra Januar 2026.' },
+  frankrike: { years: 2, notes: 'Kan enkelt fornyes gjennom en digital portal.' },
+  hellas: { years: 1, notes: '' },
+  irland: { years: 4, notes: 'Som regel 4 år, men for enkelte som ikke har fast bosted er det kortere.' },
+  island: { years: 3, notes: '' },
+  italia: { years: 6, notes: '' },
+  kroatia: { years: 3, notes: '' },
+  kypros: { years: 2, notes: '' },
+  latvia: { years: 3, notes: '' },
+  liechtenstein: { years: 1, notes: '' },
+  litauen: { years: 2, notes: '' },
+  luxembourg: { years: 2, notes: '' },
+  malta: { years: 2, notes: '' },
+  nederland: { years: 5, notes: '' },
+  norge: { years: 3, notes: '' },
+  polen: { years: 3, notes: '' },
+  portugal: { years: 3, notes: '' },
+  romania: { years: 2, notes: '' },
+  slovakia: { years: 5, notes: '' },
+  slovenia: { years: 1, notes: '' },
+  spania: { years: 2, notes: 'Normalt med 2 år men kan være lenger for pensjonister' },
+  sverige: { years: 3, notes: '' },
+  tsjekkia: { years: 5, notes: '' },
+  tyskland: { years: null, notes: '1–5 år' },
+  ungarn: { years: 3, notes: '' },
+  østerrike: { years: 5, notes: '' },
+  'storbritannia (uk)': { years: 5, notes: 'Erstattet EHIC når Storbritania gikk ut av EU.' },
+};
+
+const parseNorwegianDate = (value) => {
+  if (!value) return null;
+  const raw = String(value).trim();
+  const match = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const d = new Date(year, month - 1, day);
+  if (Number.isNaN(d.getTime())) return null;
+  if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+  return d;
+};
+
+const subtractYears = (date, years) => {
+  const d = date instanceof Date ? new Date(date) : new Date(date);
+  if (Number.isNaN(d.getTime())) return null;
+  const copy = new Date(d);
+  copy.setFullYear(copy.getFullYear() - years);
+  return copy;
+};
+
+export function calculateEhicValidFrom({ countryName, validTo, searchTimestamp }) {
+  const countryKey = normalizeCountryName(countryName);
+  if (!countryKey) {
+    return { validFrom: null, years: null, notes: '', reason: 'missing_country' };
+  }
+
+  const rule = EHIC_VALIDITY_YEARS_BY_COUNTRY[countryKey];
+  if (!rule) {
+    return { validFrom: null, years: null, notes: '', reason: 'unknown_country' };
+  }
+
+  if (!rule.years) {
+    return { validFrom: null, years: rule.years, notes: rule.notes, reason: 'varies' };
+  }
+
+  const parsedValidTo = parseNorwegianDate(validTo);
+  if (!parsedValidTo) {
+    return { validFrom: null, years: rule.years, notes: rule.notes, reason: 'invalid_valid_to' };
+  }
+
+  const computed = subtractYears(parsedValidTo, rule.years);
+  if (!computed) {
+    return { validFrom: null, years: rule.years, notes: rule.notes, reason: 'compute_failed' };
+  }
+
+  if (searchTimestamp) {
+    const searchedAt = new Date(searchTimestamp);
+    if (!Number.isNaN(searchedAt.getTime()) && computed.getTime() > searchedAt.getTime()) {
+      return { validFrom: computed, years: rule.years, notes: rule.notes, reason: 'computed_after_search' };
+    }
+  }
+
+  return { validFrom: computed, years: rule.years, notes: rule.notes, reason: 'ok' };
+}
+
 function getSelectedCircumstances(data) {
   return data?.circumstances || (data?.circumstance ? [data.circumstance] : []);
 }
@@ -244,7 +337,7 @@ export function calculateResult(data) {
       res = {
         type: 'success',
         trygdenasjon: country.name,
-        finansiering: 'EU/EØS / Helfo',
+        finansiering: 'Konvensjonsavtale / Helfo',
         beskrivelse: 'Akutt helsehjelp dekkes når helserettigheter er dokumentert.',
         handling: 'Registrer dokumentert helserettighet i DIPS i henhold til lokale rutiner. Ta kopi av fremvist dokumentasjon.'
       };
@@ -252,7 +345,7 @@ export function calculateResult(data) {
       res = {
         type: 'success',
         trygdenasjon: country.name,
-        finansiering: 'EU/EØS / Helfo',
+        finansiering: 'Konvensjonsavtale / Helfo',
         beskrivelse: 'Planlagt helsehjelp dekkes når helserettigheter er dokumentert.',
         handling: 'Rettighetsdokumentasjon må scannes og registreres i pasientens journal i henhold til lokale rutiner.'
       };
@@ -270,7 +363,7 @@ export function calculateResult(data) {
       res = {
         type: 'success',
         trygdenasjon: country.name,
-        finansiering: 'Konvensjon / Helfo',
+        finansiering: 'Konvensjonsavtale / Helfo',
         beskrivelse: 'Helsehjelp dekkes via bilateral avtale.',
         handling: `Ta kopi av gyldig nasjonalt dokument (f.eks. GHIC / pass fra ${country.name}).`
       };

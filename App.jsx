@@ -23,6 +23,7 @@ export default function RegistrationWizard() {
   
   const [data, setData] = useState({
     country: null,
+    countrySearchTimestamp: null,
     circumstance: null,
     circumstances: [],
     isUndocumented: false,
@@ -105,6 +106,7 @@ export default function RegistrationWizard() {
     setSelectedDocs([]);
     setData({
       country,
+      countrySearchTimestamp: Date.now(),
       circumstance: null,
       circumstances: [],
       isUndocumented: false,
@@ -121,7 +123,7 @@ export default function RegistrationWizard() {
     setSearchTerm('');
     setSelectedDocs([]);
     setHighlightedCountryIndex(0);
-    setData({ country: null, circumstance: null, circumstances: [], isUndocumented: false, need: null, hasDoc: null });
+    setData({ country: null, countrySearchTimestamp: null, circumstance: null, circumstances: [], isUndocumented: false, need: null, hasDoc: null });
   };
 
   const renderTextWithPrcLink = (text) => {
@@ -148,7 +150,7 @@ export default function RegistrationWizard() {
   };
 
   const handleUnknownPatient = (isChild = false) => {
-    setData({ country: null, circumstance: isChild ? 'child' : null, circumstances: isChild ? ['child'] : [], isUndocumented: true, need: null, hasDoc: null });
+    setData({ country: null, countrySearchTimestamp: null, circumstance: isChild ? 'child' : null, circumstances: isChild ? ['child'] : [], isUndocumented: true, need: null, hasDoc: null });
     setStep(4);
   };
 
@@ -237,10 +239,10 @@ export default function RegistrationWizard() {
               <div className="bg-slate-50 border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
                 <p className="font-bold text-gray-800 text-center">Papirløs / uten lovlig opphold</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button onClick={() => handleUnknownPatient(true)} className="w-full p-4 border border-gray-200 bg-white rounded-xl hover:bg-blue-50 hover:border-blue-400 transition-colors text-left">
+                  <button onClick={() => handleUnknownPatient(true)} className="w-full p-4 border border-sky-200 bg-sky-50 rounded-xl hover:bg-sky-100 hover:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors text-left">
                     <span className="font-bold text-gray-800 block">Under 18 år</span>
                   </button>
-                  <button onClick={() => handleUnknownPatient(false)} className="w-full p-4 border border-gray-200 bg-white rounded-xl hover:bg-blue-50 hover:border-blue-400 transition-colors text-left">
+                  <button onClick={() => handleUnknownPatient(false)} className="w-full p-4 border border-violet-300 bg-violet-100 rounded-xl hover:bg-violet-200 hover:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors text-left">
                     <span className="font-bold text-gray-800 block">Over 18 år</span>
                   </button>
                 </div>
@@ -416,23 +418,26 @@ export default function RegistrationWizard() {
             <ArrowLeft className="h-4 w-4 mr-1" /> Tilbake
           </button>
           {hasCircumstance(data, 'family_reunification') && <FamilyReunificationNotice />}
-          <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt, planlagt eller tvang?</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt, planlagt{hasCircumstance(data, 'psychiatry') ? ' eller tvang' : ''}?</h2>
+          <div className={`grid grid-cols-1 ${hasCircumstance(data, 'psychiatry') ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
             <button onClick={() => updateData('need', 'acute')} className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-center transition-all group">
               <HeartPulse className="h-10 w-10 mx-auto text-red-500 mb-3 group-hover:scale-110 transition-transform" />
               <span className="font-bold text-gray-800 block text-lg">Akutt (Nødvendig)</span>
               <span className="text-xs text-gray-500 mt-1 block">Helsehjelp som ikke kan vente til pasienten reiser hjem</span>
             </button>
+
             <button onClick={() => updateData('need', 'planned')} className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-center transition-all group">
               <CalendarCheck className="h-10 w-10 mx-auto text-blue-500 mb-3 group-hover:scale-110 transition-transform" />
               <span className="font-bold text-gray-800 block text-lg">Planlagt behandling</span>
               <span className="text-xs text-gray-500 mt-1 block">Pasienten har reist hit formelt for behandling</span>
             </button>
-            <button onClick={() => updateData('need', 'coercion')} className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-center transition-all group">
-              <AlertTriangle className="h-10 w-10 mx-auto text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
-              <span className="font-bold text-gray-800 block text-lg">Tvang</span>
-              <span className="text-xs text-gray-500 mt-1 block">Tvangsinnleggelse / tvungent psykisk helsevern</span>
-            </button>
+            {hasCircumstance(data, 'psychiatry') && (
+              <button onClick={() => updateData('need', 'coercion')} className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-center transition-all group">
+                <AlertTriangle className="h-10 w-10 mx-auto text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
+                <span className="font-bold text-gray-800 block text-lg">Tvang</span>
+                <span className="text-xs text-gray-500 mt-1 block">Tvangsinnleggelse / tvungent psykisk helsevern</span>
+              </button>
+            )}
           </div>
         </div>
       );
@@ -467,8 +472,8 @@ export default function RegistrationWizard() {
         {hasCircumstance(data, 'family_reunification') && <FamilyReunificationNotice />}
         {showNeedSelector && (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt, planlagt eller tvang?</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt, planlagt{hasCircumstance(data, 'psychiatry') ? ' eller tvang' : ''}?</h2>
+            <div className={`grid grid-cols-1 ${hasCircumstance(data, 'psychiatry') ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
               <button
                 onClick={() => updateData('need', 'acute')}
                 className={`p-6 border-2 rounded-xl text-center transition-all group ${data.need === 'acute' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'}`}
@@ -485,14 +490,16 @@ export default function RegistrationWizard() {
                 <span className="font-bold text-gray-800 block text-lg">Planlagt behandling</span>
                 <span className="text-xs text-gray-500 mt-1 block">Pasienten har reist hit formelt for behandling</span>
               </button>
-              <button
-                onClick={() => updateData('need', 'coercion')}
-                className={`p-6 border-2 rounded-xl text-center transition-all group ${data.need === 'coercion' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'}`}
-              >
-                <AlertTriangle className="h-10 w-10 mx-auto text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
-                <span className="font-bold text-gray-800 block text-lg">Tvang</span>
-                <span className="text-xs text-gray-500 mt-1 block">Tvangsinnleggelse / tvungent psykisk helsevern</span>
-              </button>
+              {hasCircumstance(data, 'psychiatry') && (
+                <button
+                  onClick={() => updateData('need', 'coercion')}
+                  className={`p-6 border-2 rounded-xl text-center transition-all group ${data.need === 'coercion' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'}`}
+                >
+                  <AlertTriangle className="h-10 w-10 mx-auto text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
+                  <span className="font-bold text-gray-800 block text-lg">Tvang</span>
+                  <span className="text-xs text-gray-500 mt-1 block">Tvangsinnleggelse / tvungent psykisk helsevern</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -577,6 +584,44 @@ export default function RegistrationWizard() {
 
     const bgColors = { success: 'bg-green-50 border-green-200', warning: 'bg-orange-50 border-orange-200', error: 'bg-red-50 border-red-200' };
     const iconColors = { success: <CheckCircle className="h-8 w-8 text-green-600" />, warning: <AlertTriangle className="h-8 w-8 text-orange-600" />, error: <AlertCircle className="h-8 w-8 text-red-600" /> };
+
+    const getHelfoDocumentationTitle = () => {
+      if (!Array.isArray(selectedDocs) || selectedDocs.length === 0) {
+        return null;
+      }
+
+      const preferredOrder = ['ehic', 'prc', 's1', 's2', 's3'];
+      const firstMatch = preferredOrder.find((docId) => selectedDocs.includes(docId));
+
+      if (!firstMatch) {
+        return null;
+      }
+
+      const titleByDoc = {
+        ehic: 'EHIC',
+        prc: 'PRC',
+        s1: 'S1',
+        s2: 'S2',
+        s3: 'S3',
+      };
+
+      return titleByDoc[firstMatch] || null;
+    };
+
+    const resultTitle = (() => {
+      if (result.finansiering?.includes('Selvbetalende')) {
+        return 'Selvbetalende';
+      }
+
+      if (result.finansiering?.includes('Helfo')) {
+        const docTitle = getHelfoDocumentationTitle();
+        if (docTitle) {
+          return `${docTitle} / Helfo`;
+        }
+      }
+
+      return result.finansiering;
+    })();
     const rawHandlingItems = (result.handling || '')
       .split(result.handling?.includes('\n') ? /\n+/ : /(?<=\.)\s+/)
       .map((item) => item.trim())
@@ -642,7 +687,7 @@ export default function RegistrationWizard() {
           <div className="flex items-start space-x-4 mb-6">
             <div className="mt-1">{iconColors[result.type]}</div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">{result.finansiering?.includes('Selvbetalende') ? 'Selvbetalende' : result.finansiering}</h3>
+              <h3 className="text-xl font-bold text-gray-900">{resultTitle}</h3>
               <p className="text-gray-700 mt-1">{result.beskrivelse}</p>
             </div>
           </div>
@@ -680,7 +725,14 @@ export default function RegistrationWizard() {
         </div>
         
         {shouldShowDipsGuidePasReg && <DipsGuidePasReg trygdenasjon={result.trygdenasjon} />}
-        {shouldShowDipsGuidePasFin && <DipsGuidePasFin />}
+        {shouldShowDipsGuidePasFin && (
+          <DipsGuidePasFin
+            countryName={data?.country?.name}
+            docType={getHelfoDocumentationTitle() || ''}
+            searchTimestamp={data?.countrySearchTimestamp}
+            onBackToDocumentation={() => setStep(3)}
+          />
+        )}
 
         <button onClick={resetWizard} className="w-full py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors shadow-md mt-8">
           Start ny registrering
