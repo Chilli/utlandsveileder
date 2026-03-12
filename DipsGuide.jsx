@@ -219,24 +219,24 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
 
           <div className="md:col-span-2">
             <label className="block text-xs font-semibold text-gray-500 mb-1">Kortnummer (Felt 8)</label>
-            <input readOnly value="" className="w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg outline-none cursor-not-allowed" />
+            <input readOnly value="1234" className="w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg outline-none cursor-not-allowed" />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mt-4 items-end">
           <div className="md:col-span-4">
             <label className="block text-xs font-semibold text-gray-500 mb-1">Pasient-ID (Felt 6)</label>
-            <input readOnly value="" className="w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg outline-none cursor-not-allowed" />
+            <input readOnly value="11223344" className="w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg outline-none cursor-not-allowed" />
           </div>
 
           <div className="md:col-span-4">
             <label className="block text-xs font-semibold text-gray-500 mb-1">Trygdekontor (Felt 7, Navn)</label>
-            <input readOnly value="" className="w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg outline-none cursor-not-allowed" />
+            <input readOnly value="ABCDE" className="w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg outline-none cursor-not-allowed" />
           </div>
 
           <div className="md:col-span-2">
             <label className="block text-xs font-semibold text-gray-500 mb-1">Trygdekontornr (Felt 7, Nummer)</label>
-            <input readOnly value="" className="w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg outline-none cursor-not-allowed" />
+            <input readOnly value="4422" className="w-full p-2.5 border border-gray-300 bg-gray-50 rounded-lg outline-none cursor-not-allowed" />
           </div>
         </div>
 
@@ -281,7 +281,7 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
                       <div className="text-[10px] text-slate-600 font-semibold text-right">
                         Pasient-ID <span className="ml-1 inline-flex items-center rounded-full bg-emerald-200/90 px-1.5 py-0.5 text-[9px] font-bold text-emerald-900 border border-emerald-300">Felt 6</span>
                       </div>
-                      <div className="mt-1 h-4 sm:h-5 rounded-md bg-slate-100 px-1.5 flex items-center justify-end text-[10px] text-slate-700">123456789</div>
+                      <div className="mt-1 h-4 sm:h-5 rounded-md bg-slate-100 px-1.5 flex items-center justify-end text-[10px] text-slate-700">11223344</div>
                     </div>
                   </div>
                 </div>
@@ -292,7 +292,7 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
                     Trygdenavn <span className="ml-1 inline-flex items-center rounded-full bg-amber-200/90 px-1.5 py-0.5 text-[9px] font-bold text-amber-900 border border-amber-300">Felt 7</span>
                   </div>
                   <div className="mt-1 flex justify-end gap-2">
-                    <div className="h-4 sm:h-5 w-52 sm:w-60 rounded-md bg-slate-100 px-1.5 flex items-center justify-end text-[10px] text-slate-700">12345 - ABCDE</div>
+                    <div className="h-4 sm:h-5 w-52 sm:w-60 rounded-md bg-slate-100 px-1.5 flex items-center justify-end text-[10px] text-slate-700">4422 - ABCDE</div>
                   </div>
                 </div>
 
@@ -302,7 +302,7 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
                       <div className="text-[10px] text-slate-600 font-semibold whitespace-nowrap">
                         Kortnummer <span className="ml-1 inline-flex items-center rounded-full bg-sky-200/90 px-1.5 py-0.5 text-[9px] font-bold text-sky-900 border border-sky-300">Felt 8</span>
                       </div>
-                      <div className="mt-1 h-4 sm:h-5 rounded-md bg-slate-100 px-1.5 flex items-center text-[10px] text-slate-700">123456789</div>
+                      <div className="mt-1 h-4 sm:h-5 rounded-md bg-slate-100 px-1.5 flex items-center text-[10px] text-slate-700">1234</div>
                     </div>
                     <div className="w-28 sm:w-32">
                       <div className="text-[10px] text-slate-600 font-semibold text-right whitespace-nowrap">
@@ -347,15 +347,19 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
       <div className="hidden sm:block">{isFinancingOpen && financingContent}</div>
 
       {isFinancingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 relative">
           <button
             type="button"
             aria-label="Lukk"
             onClick={() => setIsFinancingModalOpen(false)}
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/40 z-0"
           />
-          <div role="dialog" aria-modal="true" className="relative w-full max-w-3xl max-h-[92vh] overflow-auto rounded-2xl bg-white shadow-2xl border border-gray-200">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="relative z-10 w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col"
+          >
+            <div className="sticky top-0 z-20 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
               <div className="font-bold text-gray-800">Veiledning for felter i DIPS Pasientfinansiering</div>
               <button
                 type="button"
@@ -365,7 +369,7 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
                 Lukk
               </button>
             </div>
-            <div className="-mt-px">{financingContent}</div>
+            <div className="overflow-auto">{financingContent}</div>
           </div>
         </div>
       )}
