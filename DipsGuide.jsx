@@ -348,15 +348,16 @@ export function DipsGuidePasFin({ countryName, docType, searchTimestamp, onBackT
 
       {isFinancingModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 relative">
-          <button
-            type="button"
-            aria-label="Lukk"
-            onClick={() => setIsFinancingModalOpen(false)}
+          <div
+            aria-hidden="true"
+            onMouseDown={() => setIsFinancingModalOpen(false)}
             className="absolute inset-0 bg-black/40 z-0"
           />
           <div
             role="dialog"
             aria-modal="true"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             className="relative z-10 w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-200 flex flex-col"
           >
             <div className="sticky top-0 z-20 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
