@@ -46,7 +46,7 @@ export function getDocumentationScenario(data) {
   }
 
   if (data.country.zone === 'EU_EOS') {
-    if (data.need === 'acute') {
+    if (data.need === 'acute' || data.need === 'coercion') {
       return 'eu_eos_acute';
     }
 
@@ -240,7 +240,7 @@ export function calculateResult(data) {
       };
     }
   } else if (country.zone === 'EU_EOS') {
-    if (need === 'acute' && hasDoc === true) {
+    if ((need === 'acute' || need === 'coercion') && hasDoc === true) {
       res = {
         type: 'success',
         trygdenasjon: country.name,
@@ -261,12 +261,12 @@ export function calculateResult(data) {
         type: 'error',
         trygdenasjon: country.name,
         finansiering: 'Selvbetalende',
-        beskrivelse: 'Pasienten mangler gyldig dokumentasjon på nåværende tidpunkt og vil dermed måtte betale selv',
+        beskrivelse: 'Pasienten mangler gyldig dokumentasjon på nåværende tidspunkt og vil dermed måtte betale selv',
         handling: 'Pasienten blir selvbetalende, velg frikode Selvbetalende og legg til takst, for eksempel 201b\nHar pasienten allerede fått utstedt EHIC men har det ikke fysisk med seg, kan dette snarest sendes kopi av (Begge sider) og registeres i Pasientfinansiering i DIPS.\nPasienten kan unngå å bli selvbetalende ved å innhente hasteblanket (PRC) fra sitt hjemland.\nFaktura sendes til registrert adresse.'
       };
     }
   } else if (country.zone === 'Konvensjon') {
-    if (need === 'acute' && hasDoc === true) {
+    if ((need === 'acute' || need === 'coercion') && hasDoc === true) {
       res = {
         type: 'success',
         trygdenasjon: country.name,

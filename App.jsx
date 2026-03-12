@@ -48,6 +48,10 @@ export default function RegistrationWizard() {
     const selectedCircumstances = getSelectedCircumstances(value);
     const hasChildCombination = selectedCircumstances.includes('child') && selectedCircumstances.length > 1;
 
+    if (selectedCircumstances.includes('psychiatry')) {
+      return false;
+    }
+
     if (selectedCircumstances.includes('family_reunification')) {
       return false;
     }
@@ -262,6 +266,7 @@ export default function RegistrationWizard() {
 
     const circumstanceOrder = [
       'pregnancy',
+      'psychiatry',
       'family_reunification',
       'asylum',
       'worker',
@@ -402,7 +407,7 @@ export default function RegistrationWizard() {
     const documentationScenarioKey = getDocumentationScenario(data);
     const documentationScenario = documentationScenarioKey ? DOCUMENTATION_SCENARIOS[documentationScenarioKey] : null;
 
-    const showNeedSelector = (data.country.zone === 'EU_EOS' || data.country.zone === 'Konvensjon') && !hasCircumstance(data, 'worker') && !hasCircumstance(data, 'child');
+    const showNeedSelector = hasCircumstance(data, 'psychiatry') || ((data.country.zone === 'EU_EOS' || data.country.zone === 'Konvensjon') && !hasCircumstance(data, 'worker') && !hasCircumstance(data, 'child'));
 
     if (showNeedSelector && !data.need) {
       return (
@@ -411,8 +416,8 @@ export default function RegistrationWizard() {
             <ArrowLeft className="h-4 w-4 mr-1" /> Tilbake
           </button>
           {hasCircumstance(data, 'family_reunification') && <FamilyReunificationNotice />}
-          <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt eller planlagt helsehjelp?</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt, planlagt eller tvang?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <button onClick={() => updateData('need', 'acute')} className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-center transition-all group">
               <HeartPulse className="h-10 w-10 mx-auto text-red-500 mb-3 group-hover:scale-110 transition-transform" />
               <span className="font-bold text-gray-800 block text-lg">Akutt (Nødvendig)</span>
@@ -422,6 +427,11 @@ export default function RegistrationWizard() {
               <CalendarCheck className="h-10 w-10 mx-auto text-blue-500 mb-3 group-hover:scale-110 transition-transform" />
               <span className="font-bold text-gray-800 block text-lg">Planlagt behandling</span>
               <span className="text-xs text-gray-500 mt-1 block">Pasienten har reist hit formelt for behandling</span>
+            </button>
+            <button onClick={() => updateData('need', 'coercion')} className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-center transition-all group">
+              <AlertTriangle className="h-10 w-10 mx-auto text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
+              <span className="font-bold text-gray-800 block text-lg">Tvang</span>
+              <span className="text-xs text-gray-500 mt-1 block">Tvangsinnleggelse / tvungent psykisk helsevern</span>
             </button>
           </div>
         </div>
@@ -457,8 +467,8 @@ export default function RegistrationWizard() {
         {hasCircumstance(data, 'family_reunification') && <FamilyReunificationNotice />}
         {showNeedSelector && (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt eller planlagt helsehjelp?</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt, planlagt eller tvang?</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <button
                 onClick={() => updateData('need', 'acute')}
                 className={`p-6 border-2 rounded-xl text-center transition-all group ${data.need === 'acute' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'}`}
@@ -474,6 +484,14 @@ export default function RegistrationWizard() {
                 <CalendarCheck className="h-10 w-10 mx-auto text-blue-500 mb-3 group-hover:scale-110 transition-transform" />
                 <span className="font-bold text-gray-800 block text-lg">Planlagt behandling</span>
                 <span className="text-xs text-gray-500 mt-1 block">Pasienten har reist hit formelt for behandling</span>
+              </button>
+              <button
+                onClick={() => updateData('need', 'coercion')}
+                className={`p-6 border-2 rounded-xl text-center transition-all group ${data.need === 'coercion' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'}`}
+              >
+                <AlertTriangle className="h-10 w-10 mx-auto text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
+                <span className="font-bold text-gray-800 block text-lg">Tvang</span>
+                <span className="text-xs text-gray-500 mt-1 block">Tvangsinnleggelse / tvungent psykisk helsevern</span>
               </button>
             </div>
           </div>
