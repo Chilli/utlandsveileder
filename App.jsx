@@ -7,7 +7,7 @@ import {
 
 import { COUNTRIES, CIRCUMSTANCES, STEPS, DOCUMENT_OPTIONS, DOCUMENTATION_SCENARIOS } from './registrationConfig.js';
 import { calculateResult as calculateRegistrationResult, getDocumentationScenario, isDocumentationSufficient } from './registrationRules.js';
-import DipsGuide from './DipsGuide.jsx';
+import { DipsGuidePasFin, DipsGuidePasReg } from './DipsGuide.jsx';
 
 // --- DATASTRUKTUR ---
 const DOCUMENT_ICONS = { IdCard, CreditCard, FileText, Home, Briefcase, AlertCircle };
@@ -17,6 +17,7 @@ export default function RegistrationWizard() {
   const [step, setStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDocs, setSelectedDocs] = useState([]);
+  const [isPrcModalOpen, setIsPrcModalOpen] = useState(false);
   
   const [highlightedCountryIndex, setHighlightedCountryIndex] = useState(0);
   
@@ -29,13 +30,27 @@ export default function RegistrationWizard() {
     hasDoc: null,
   });
 
-  const getSelectedCircumstances = (value) => value?.circumstances || (value?.circumstance ? [value.circumstance] : []);
+  const getSelectedCircumstances = (value) => {
+    if (Array.isArray(value?.circumstances)) {
+      return value.circumstances;
+    }
+
+    if (value?.circumstance) {
+      return [value.circumstance];
+    }
+
+    return [];
+  };
 
   const hasCircumstance = (value, circumstanceId) => getSelectedCircumstances(value).includes(circumstanceId);
 
   const shouldSkipDocumentation = (value) => {
     const selectedCircumstances = getSelectedCircumstances(value);
     const hasChildCombination = selectedCircumstances.includes('child') && selectedCircumstances.length > 1;
+
+    if (selectedCircumstances.includes('family_reunification')) {
+      return false;
+    }
 
     if (selectedCircumstances.includes('prisoner')) {
       return true;
@@ -83,7 +98,15 @@ export default function RegistrationWizard() {
   };
 
   const handleCountrySelect = (country) => {
-    setData((prev) => ({ ...prev, country, isUndocumented: false }));
+    setSelectedDocs([]);
+    setData({
+      country,
+      circumstance: null,
+      circumstances: [],
+      isUndocumented: false,
+      need: null,
+      hasDoc: null,
+    });
     setSearchTerm(country.name);
     setHighlightedCountryIndex(0);
     setTimeout(() => setStep(2), 150);
@@ -95,6 +118,29 @@ export default function RegistrationWizard() {
     setSelectedDocs([]);
     setHighlightedCountryIndex(0);
     setData({ country: null, circumstance: null, circumstances: [], isUndocumented: false, need: null, hasDoc: null });
+  };
+
+  const renderTextWithPrcLink = (text) => {
+    if (!text || !text.includes('PRC')) {
+      return text;
+    }
+
+    return text.split(/(PRC)/g).map((part, index) => {
+      if (part !== 'PRC') {
+        return <React.Fragment key={index}>{part}</React.Fragment>;
+      }
+
+      return (
+        <button
+          key={index}
+          type="button"
+          onClick={() => setIsPrcModalOpen(true)}
+          className="font-semibold text-blue-700 underline hover:text-blue-800"
+        >
+          PRC
+        </button>
+      );
+    });
   };
 
   const handleUnknownPatient = (isChild = false) => {
@@ -111,6 +157,27 @@ export default function RegistrationWizard() {
 
     setStep(nextStep);
   };
+
+  const FamilyReunificationNotice = () => (
+    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+        <div className="space-y-2 text-sm text-amber-950">
+          <p className="font-bold">Viktig ved familiegjenforening / familieinnvandring</p>
+          <p>
+            Dersom pasienten oppholder seg i Norge mens søknad om familieinnvandring behandles, har pasienten som hovedregel
+            ikke helserettigheter i Norge ennå.
+          </p>
+          <p>
+            Det betyr at pasienten normalt bare har rett til øyeblikkelig hjelp, og skal ellers registreres som selvbetalende.
+          </p>
+          <p>
+            Dette gjelder også dersom pasienten er gravid. Graviditet i seg selv gir ikke dekning fra Norge mens søknaden fortsatt er til behandling.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   const result = step === 4 ? calculateRegistrationResult(data) : null;
 
@@ -163,14 +230,14 @@ export default function RegistrationWizard() {
             </button>
           ) : (
             <div className="space-y-3">
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 shadow-sm space-y-4">
-                <p className="font-bold text-orange-950 text-center">Papirløs / uten lovlig opphold</p>
+              <div className="bg-slate-50 border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <p className="font-bold text-gray-800 text-center">Papirløs / uten lovlig opphold</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button onClick={() => handleUnknownPatient(true)} className="w-full p-4 border border-green-200 bg-green-50 rounded-xl hover:bg-green-100 transition-colors text-left">
-                    <span className="font-bold text-green-900 block">Under 16 år</span>
+                  <button onClick={() => handleUnknownPatient(true)} className="w-full p-4 border border-gray-200 bg-white rounded-xl hover:bg-blue-50 hover:border-blue-400 transition-colors text-left">
+                    <span className="font-bold text-gray-800 block">Under 18 år</span>
                   </button>
-                  <button onClick={() => handleUnknownPatient(false)} className="w-full p-4 border border-red-300 bg-red-100 rounded-xl hover:bg-red-200 transition-colors text-left">
-                    <span className="font-bold text-red-900 block">Over 18 år</span>
+                  <button onClick={() => handleUnknownPatient(false)} className="w-full p-4 border border-gray-200 bg-white rounded-xl hover:bg-blue-50 hover:border-blue-400 transition-colors text-left">
+                    <span className="font-bold text-gray-800 block">Over 18 år</span>
                   </button>
                 </div>
               </div>
@@ -335,7 +402,7 @@ export default function RegistrationWizard() {
     const documentationScenarioKey = getDocumentationScenario(data);
     const documentationScenario = documentationScenarioKey ? DOCUMENTATION_SCENARIOS[documentationScenarioKey] : null;
 
-    const showNeedSelector = data.country.zone === 'EU_EOS' && !hasCircumstance(data, 'worker') && !hasCircumstance(data, 'child');
+    const showNeedSelector = (data.country.zone === 'EU_EOS' || data.country.zone === 'Konvensjon') && !hasCircumstance(data, 'worker') && !hasCircumstance(data, 'child');
 
     if (showNeedSelector && !data.need) {
       return (
@@ -343,6 +410,7 @@ export default function RegistrationWizard() {
           <button onClick={() => setStep(2)} className="flex items-center text-sm text-gray-500 hover:text-gray-800 mb-4">
             <ArrowLeft className="h-4 w-4 mr-1" /> Tilbake
           </button>
+          {hasCircumstance(data, 'family_reunification') && <FamilyReunificationNotice />}
           <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt eller planlagt helsehjelp?</h2>
           <div className="grid grid-cols-2 gap-4">
             <button onClick={() => updateData('need', 'acute')} className="p-6 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 text-center transition-all group">
@@ -386,26 +454,7 @@ export default function RegistrationWizard() {
         <button onClick={() => { setStep(2); setSelectedDocs([]); }} className="flex items-center text-sm text-gray-500 hover:text-gray-800 mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" /> Tilbake
         </button>
-        {hasCircumstance(data, 'family_reunification') && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="space-y-2 text-sm text-amber-950">
-                <p className="font-bold">Viktig ved familiegjenforening / familieinnvandring</p>
-                <p>
-                  Dersom pasienten oppholder seg i Norge mens søknad om familieinnvandring behandles, har pasienten som hovedregel
-                  ikke helserettigheter i Norge ennå.
-                </p>
-                <p>
-                  Det betyr at pasienten normalt bare har rett til øyeblikkelig hjelp, og skal ellers registreres som selvbetalende.
-                </p>
-                <p>
-                  Dette gjelder også dersom pasienten er gravid. Graviditet i seg selv gir ikke dekning fra Norge mens søknaden fortsatt er til behandling.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        {hasCircumstance(data, 'family_reunification') && <FamilyReunificationNotice />}
         {showNeedSelector && (
           <div className="space-y-4">
             <h2 className="text-xl font-bold text-gray-800">Gjelder det akutt eller planlagt helsehjelp?</h2>
@@ -493,6 +542,10 @@ export default function RegistrationWizard() {
   };
 
   const renderStep4 = () => {
+    const result = calculateRegistrationResult(data);
+    const shouldShowDipsGuidePasReg = Boolean(data?.country);
+    const shouldShowDipsGuidePasFin = Boolean(data?.country) && (data.country.zone === 'EU_EOS' || data.country.zone === 'Konvensjon');
+
     if (!result) {
       return (
         <div className="text-center py-12">
@@ -506,28 +559,72 @@ export default function RegistrationWizard() {
 
     const bgColors = { success: 'bg-green-50 border-green-200', warning: 'bg-orange-50 border-orange-200', error: 'bg-red-50 border-red-200' };
     const iconColors = { success: <CheckCircle className="h-8 w-8 text-green-600" />, warning: <AlertTriangle className="h-8 w-8 text-orange-600" />, error: <AlertCircle className="h-8 w-8 text-red-600" /> };
-    const handlingItems = result.handling
-      .split(/(?<=\.)\s+/)
-      .filter(Boolean)
-      .reduce((items, item) => {
-        if (/^Dette kan være\b/.test(item) && items.length > 0) {
-          const previousItem = items[items.length - 1];
-          items[items.length - 1] = { ...previousItem, detail: item };
-          return items;
-        }
+    const rawHandlingItems = (result.handling || '')
+      .split(result.handling?.includes('\n') ? /\n+/ : /(?<=\.)\s+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
 
-        items.push({ text: item, detail: '' });
+    const handlingItems = rawHandlingItems.reduce((items, item) => {
+      if (/^Dette kan være\b/.test(item) && items.length > 0) {
+        const previousItem = items[items.length - 1];
+        items[items.length - 1] = { ...previousItem, detail: item };
         return items;
-      }, []);
+      }
+
+      items.push({ text: item, detail: '' });
+      return items;
+    }, []);
 
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Fasit for DIPS</h2>
+        {isPrcModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <button
+              type="button"
+              aria-label="Lukk"
+              onClick={() => setIsPrcModalOpen(false)}
+              className="absolute inset-0 bg-black/40"
+            />
+            <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-200 p-6">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Hva er PRC (Hasteblankett)?</h3>
+                <button
+                  type="button"
+                  onClick={() => setIsPrcModalOpen(false)}
+                  className="px-3 py-1 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+                >
+                  Lukk
+                </button>
+              </div>
+              <div className="space-y-4 text-gray-800">
+                <p>En PRC er en midlertidig erstatning for Europeisk helsetrygdkort (EHIC).</p>
+                <div>
+                  <p className="font-semibold">Når brukes det?</p>
+                  <p>
+                    Hvis en pasient fra et EØS-land har glemt, mistet, eller ikke rukket å få det fysiske EHIC-kortet sitt før de reiste til Norge.
+                    De kan da kontakte trygdemyndighetene i hjemlandet sitt, som sender over en PRC per faks eller epost.
+                    Dette videresendes da til Helseforetaket av pasienten selv.
+                    Merk at enkelte nasjoner har ulike navn og søkeprosesser på PRC.
+                    Be pasient søke opp EHIC PRC + landet sitt.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold">Hvilke rettigheter gir det?</p>
+                  <p>Nøyaktig de samme som et vanlig EHIC-kort. Altså rett til nødvendig helsehjelp under et midlertidig opphold.</p>
+                </div>
+                <div>
+                  <p className="font-semibold">Hva gjør du i DIPS?</p>
+                  <p>Naviger til frikodefeltet, velg konvensjonsavtale og deretter hasteblankett. De betaler da kun vanlig egenandel.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div className={`border-2 p-6 rounded-2xl ${bgColors[result.type]}`}>
           <div className="flex items-start space-x-4 mb-6">
             <div className="mt-1">{iconColors[result.type]}</div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900">{result.finansiering}</h3>
+              <h3 className="text-xl font-bold text-gray-900">{result.finansiering?.includes('Selvbetalende') ? 'Selvbetalende' : result.finansiering}</h3>
               <p className="text-gray-700 mt-1">{result.beskrivelse}</p>
             </div>
           </div>
@@ -546,29 +643,26 @@ export default function RegistrationWizard() {
               </div>
             </div>
             <div className="pt-4 border-t border-gray-100">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Krav til dokumentasjon / Handling</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Praktisk informasjon</p>
               <div className="text-gray-800 bg-yellow-50 p-3 rounded-lg border border-yellow-100 break-words">
-                {handlingItems.length > 1 ? (
-                  <ul className="space-y-2">
-                    {handlingItems.map((item) => (
-                      <li key={item.text} className="flex items-start gap-2">
-                        <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
-                        <span>
-                          <span className="block">{item.text}</span>
-                          {item.detail && <span className="block mt-1">{item.detail}</span>}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>{result.handling}</p>
-                )}
+                <ul className="space-y-2">
+                  {handlingItems.map((item) => (
+                    <li key={item.text} className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
+                      <span>
+                        <span className="block">{renderTextWithPrcLink(item.text)}</span>
+                        {item.detail && <span className="block mt-1">{item.detail}</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
         </div>
         
-        <DipsGuide trygdenasjon={result.trygdenasjon} />
+        {shouldShowDipsGuidePasReg && <DipsGuidePasReg trygdenasjon={result.trygdenasjon} />}
+        {shouldShowDipsGuidePasFin && <DipsGuidePasFin />}
 
         <button onClick={resetWizard} className="w-full py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors shadow-md mt-8">
           Start ny registrering

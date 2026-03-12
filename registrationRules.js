@@ -97,11 +97,11 @@ export function calculateResult(data) {
 
   if (data?.isUndocumented && hasCircumstance(data, 'child')) {
     res = {
-      type: 'success',
+      type: 'warning',
       trygdenasjon: 'Ukjent',
-      finansiering: 'Folketrygden / Fritak',
-      beskrivelse: 'Barn under 16 år uten lovlig opphold skal få gratis behandling i Norge og betaler ingen egenandel.',
-      handling: 'Registrer pasienten med fritak for egenandel. Sørg for at alder er riktig registrert. Helsehjelp skal gis også uten lovlig opphold.'
+      finansiering: 'Selvbetalende',
+      beskrivelse: 'Pasienter under 18 år uten lovlig opphold har rett til helsehjelp på lik linje med barn som er bosatt i Norge (full rett til nødvendig og planlagt helsehjelp).',
+      handling: 'Registrer pasienten som selvbetalende (Takst: Ordinær takst + Uselvp). Faktura sendes til foreldre/verge. Sørg for at alder og vergeopplysninger er riktig registrert.'
     };
   } else if (data?.isUndocumented) {
     res = {
@@ -112,13 +112,23 @@ export function calculateResult(data) {
       handling: 'Skal i utgangspunktet betale selv. Helsehjelp kan uansett ikke nektes ved akutt behov. Staten dekker eventuelt tap i etterkant.'
     };
   } else if (hasChildCombination) {
-    res = {
-      type: 'success',
-      trygdenasjon: hasCircumstance(data, 'asylum') ? 'Norge' : country ? country.name : 'Ukjent',
-      finansiering: 'Folketrygden / Fritak',
-      beskrivelse: 'Pasient under 16 år som også omfattes av en annen omstendighet registreres uten egenandel.',
-      handling: 'Registrer pasienten med fritak for egenandel. Sørg for at alder er riktig registrert.'
-    };
+    if (country?.zone === 'Andre') {
+      res = {
+        type: 'warning',
+        trygdenasjon: country.name,
+        finansiering: 'Selvbetalende',
+        beskrivelse: 'Barn under 18 år fra land uten EU/EØS- eller konvensjonsavtale har ingen offentlig dekning i Norge og registreres som selvbetalende.',
+        handling: 'Registrer pasienten som selvbetalende (Takst: Ordinær takst + Uselvp). Faktura sendes til foreldre/verge. Sørg for at legitimasjon/adresse registreres så langt det lar seg gjøre.'
+      };
+    } else {
+      res = {
+        type: 'success',
+        trygdenasjon: hasCircumstance(data, 'asylum') ? 'Norge' : country ? country.name : 'Ukjent',
+        finansiering: 'Folketrygden / Fritak',
+        beskrivelse: 'Pasient under 18 år som også omfattes av en annen omstendighet registreres uten egenandel.',
+        handling: 'Registrer pasienten med fritak for egenandel. Sørg for at alder er riktig registrert.'
+      };
+    }
   } else if (hasCircumstance(data, 'worker')) {
     if (hasDoc === true) {
       res = {
@@ -174,22 +184,30 @@ export function calculateResult(data) {
       handling: 'Faktura for helsehjelp og evt. egenandel sendes den aktuelle anstalten.'
     };
   } else if (hasCircumstance(data, 'child')) {
-    if (country?.zone === 'EU_EOS') {
+    if (country?.zone === 'Andre') {
+      res = {
+        type: 'warning',
+        trygdenasjon: country.name,
+        finansiering: 'Selvbetalende',
+        beskrivelse: 'Barn under 18 år fra land uten EU/EØS- eller konvensjonsavtale har ingen offentlig dekning i Norge og registreres som selvbetalende, selv om de har utvidede rettigheter til helsehjelp.',
+        handling: 'Registrer pasienten som selvbetalende (Takst: Ordinær takst + Uselvp). Faktura sendes til foreldre/verge. Barn og unge under 18 år skal få nødvendig helsehjelp på lik linje med barn bosatt i Norge.'
+      };
+    } else if (country?.zone === 'EU_EOS') {
       if (hasDoc === true) {
         res = {
           type: 'success',
           trygdenasjon: country.name,
           finansiering: 'EU/EØS / Fritak for egenandel',
-          beskrivelse: 'Pasient under 16 år fra EU/EØS med gyldig dokumentasjon har rett til helsehjelp uten egenandel.',
-          handling: 'Registrer gyldig EHIC eller annen rettighetsdokumentasjon. Sørg for at pasienten registreres uten egenandel.'
+          beskrivelse: 'Pasient under 18 år fra EU/EØS må dokumentere helserettigheter på lik linje med andre EU/EØS-borgere for å unngå selvbetalende. Barn og unge under 18 år har utvidede rettigheter til helsehjelp.',
+          handling: 'Registrer gyldig rettighetsdokumentasjon. Sørg for at pasienten registreres uten egenandel.'
         };
       } else if (hasDoc === false) {
         res = {
           type: 'error',
           trygdenasjon: country.name,
           finansiering: 'Selvbetalende',
-          beskrivelse: 'Pasient under 16 år fra EU/EØS mangler gyldig dokumentasjon på helserettigheter og må derfor registreres som selvbetalende.',
-          handling: 'Pasienten registreres som selvbetalende inntil EHIC eller annen gyldig dokumentasjon fremvises.'
+          beskrivelse: 'Pasienten mangler gyldig dokumentasjon på nåværende tidpunkt og vil dermed måtte betale selv',
+          handling: 'Pasienten blir selvbetalende, velg frikode Selvbetalende og legg til takst, for eksempel 201b\nHar pasienten allerede fått utstedt EHIC men har det ikke fysisk med seg, kan dette snarest sendes kopi av (begge sider) og registreres i Pasientfinansiering i DIPS.\nPasienten kan unngå å bli selvbetalende ved å innhente hasteblanket (PRC) fra sitt hjemland.\nFaktura sendes til registrert adresse.'
         };
       }
     } else {
@@ -197,7 +215,7 @@ export function calculateResult(data) {
         type: 'success',
         trygdenasjon: country ? country.name : 'Norge',
         finansiering: 'Folketrygden / Fritak',
-        beskrivelse: 'Pasient under 16 år har fritak for egenandel.',
+        beskrivelse: 'Pasient under 18 år har fritak for egenandel.',
         handling: 'Sørg for at alder er riktig registrert.'
       };
     }
@@ -210,7 +228,7 @@ export function calculateResult(data) {
         trygdenasjon: country.name,
         finansiering: 'Nordisk avtale / Helfo',
         beskrivelse: 'Pasienten dekkes av nordisk trygdeavtale.',
-        handling: 'Kopier offentlig ID med bostedsadresse (f.eks. førerkort/pass).'
+        handling: 'Pasienten betaler vanlig egenandel.\nKopier offentlig ID med bostedsadresse (f.eks førerkort/pass).'
       };
     } else if (hasDoc === false) {
       res = {
@@ -218,7 +236,7 @@ export function calculateResult(data) {
         trygdenasjon: country.name,
         finansiering: 'Selvbetalende',
         beskrivelse: 'Mangler gyldig ID som bekrefter bosted i Norden.',
-        handling: 'Registreres som selvbetalende. Pasienten må kreve refusjon fra hjemlandet i etterkant.'
+        handling: 'Pasienten blir selvbetalende, velg frikode Selvbetalende og legg til takst, for eksempel 201b.\nPasienten må kreve refusjon fra hjemlandet sitt i etterkant.'
       };
     }
   } else if (country.zone === 'EU_EOS') {
@@ -227,24 +245,24 @@ export function calculateResult(data) {
         type: 'success',
         trygdenasjon: country.name,
         finansiering: 'EU/EØS / Helfo',
-        beskrivelse: 'Akutt helsehjelp dekkes via Europeisk Helsetrygdkort (EHIC).',
-        handling: 'Legg inn EHIC-kortnummer og utløpsdato i DIPS. Ta kopi av kortet.'
+        beskrivelse: 'Akutt helsehjelp dekkes når helserettigheter er dokumentert.',
+        handling: 'Registrer dokumentert helserettighet i DIPS i henhold til lokale rutiner. Ta kopi av fremvist dokumentasjon.'
       };
     } else if (need === 'planned' && hasDoc === true) {
       res = {
         type: 'success',
         trygdenasjon: country.name,
         finansiering: 'EU/EØS / Helfo',
-        beskrivelse: 'Planlagt helsehjelp dekkes via S2-skjema.',
-        handling: 'S2-skjema må scannes og registreres i pasientens journal.'
+        beskrivelse: 'Planlagt helsehjelp dekkes når helserettigheter er dokumentert.',
+        handling: 'Rettighetsdokumentasjon må scannes og registreres i pasientens journal i henhold til lokale rutiner.'
       };
     } else if (hasDoc === false) {
       res = {
         type: 'error',
         trygdenasjon: country.name,
         finansiering: 'Selvbetalende',
-        beskrivelse: 'Pasienten mangler gyldig dokumentasjon (EHIC / S2).',
-        handling: 'Pasienten må betale full pris selv og søke refusjon i hjemlandet.'
+        beskrivelse: 'Pasienten mangler gyldig dokumentasjon på nåværende tidpunkt og vil dermed måtte betale selv',
+        handling: 'Pasienten blir selvbetalende, velg frikode Selvbetalende og legg til takst, for eksempel 201b\nHar pasienten allerede fått utstedt EHIC men har det ikke fysisk med seg, kan dette snarest sendes kopi av (Begge sider) og registeres i Pasientfinansiering i DIPS.\nPasienten kan unngå å bli selvbetalende ved å innhente hasteblanket (PRC) fra sitt hjemland.\nFaktura sendes til registrert adresse.'
       };
     }
   } else if (country.zone === 'Konvensjon') {
@@ -272,7 +290,7 @@ export function calculateResult(data) {
         trygdenasjon: country.name,
         finansiering: 'Selvbetalende / Privat',
         beskrivelse: 'Norge har ingen trygdeavtale med dette landet.',
-        handling: 'Pasienten må betale full pris og registreres som selvbetalende. Pasienten må selv ta kontakt med sitt forsikringsselskap ved mottakelse av faktura. Akutt livreddende hjelp ytes uansett betalingsevne.'
+        handling: 'Pasienten blir selvbetalende, velg frikode Selvbetalende og legg til takst, for eksempel 201b\nFaktura sendes til registrert adresse.\nPasienten må selv kontakte sitt forsikringsselskap.'
       };
     } else {
       res = {
@@ -280,13 +298,13 @@ export function calculateResult(data) {
         trygdenasjon: country.name,
         finansiering: 'Selvbetalende / Privat',
         beskrivelse: 'Norge har ingen trygdeavtale med dette landet. Pasienten mangler også gyldig ID/adresse.',
-        handling: 'Registreres som ukjent/selvbetalende inntil ID fremvises. Faktura sendes basert på tilgjengelig informasjon. Pasienten må selv kontakte sitt forsikringsselskap.'
+        handling: 'Pasienten blir selvbetalende, velg frikode Selvbetalende og legg til takst, for eksempel 201b\nFaktura sendes til registrert adresse.\nPasienten må selv kontakte sitt forsikringsselskap.'
       };
     }
   }
 
-  if (res && selectedCircumstances.includes('pregnancy')) {
-    res.beskrivelse += ' (Merk: Helsehjelp i forbindelse med svangerskap og fødsel regnes som nødvendig helsehjelp og kan ikke nektes, uavhengig av finansiering og oppholdsstatus.)';
+  if (res?.finansiering?.includes('Selvbetalende')) {
+    res.type = 'error';
   }
 
   return res;
