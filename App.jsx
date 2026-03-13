@@ -570,6 +570,7 @@ export default function RegistrationWizard() {
     const result = calculateRegistrationResult(data);
     const shouldShowDipsGuidePasReg = Boolean(data?.country);
     const shouldShowDipsGuidePasFin = Boolean(data?.country) && (data.country.zone === 'EU_EOS' || data.country.zone === 'Konvensjon');
+    const shouldShowEhicPracticalItems = !(hasCircumstance(data, 'psychiatry') && data?.need === 'coercion' && data?.hasDoc === false);
 
     if (!result) {
       return (
@@ -726,24 +727,28 @@ export default function RegistrationWizard() {
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Praktisk informasjon</p>
               <div className="text-gray-800 bg-yellow-50 p-3 rounded-lg border border-yellow-100 break-words">
                 <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
-                    <span>
-                      <span className="block">
-                        Registrer EHIC i DIPS i henhold til lokale rutiner. For veiledning og eksempler på EHIC kort naviger til{' '}
-                        <button type="button" onClick={openFinancingGuide} className="font-semibold text-blue-700 underline hover:text-blue-800">
-                          Veiledning for felter i DIPS Pasientfinansiering
-                        </button>
-                        .
+                  {shouldShowEhicPracticalItems && (
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
+                      <span>
+                        <span className="block">
+                          Registrer EHIC i DIPS i henhold til lokale rutiner. For veiledning og eksempler på EHIC kort naviger til{' '}
+                          <button type="button" onClick={openFinancingGuide} className="font-semibold text-blue-700 underline hover:text-blue-800">
+                            Veiledning for felter i DIPS Pasientfinansiering
+                          </button>
+                          .
+                        </span>
                       </span>
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
-                    <span>
-                      <span className="block">Ta kopi av EHIC (Bakside og fremside)</span>
-                    </span>
-                  </li>
+                    </li>
+                  )}
+                  {shouldShowEhicPracticalItems && (
+                    <li className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />
+                      <span>
+                        <span className="block">Ta kopi av EHIC (Bakside og fremside)</span>
+                      </span>
+                    </li>
+                  )}
                   {handlingItems.map((item) => (
                     <li key={item.text} className="flex items-start gap-2">
                       <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-yellow-600" />

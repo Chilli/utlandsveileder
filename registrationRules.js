@@ -188,6 +188,16 @@ export function calculateResult(data) {
   const hasChildCombination = hasCircumstance(data, 'child') && selectedCircumstances.length > 1;
   let res = null;
 
+  if (hasCircumstance(data, 'psychiatry') && need === 'coercion') {
+    return {
+      type: 'success',
+      trygdenasjon: country ? country.name : 'Ukjent',
+      finansiering: 'Intet faktureres',
+      beskrivelse: 'Ved frihetsberøvelse (tvang) skal pasienten ikke registreres som selvbetalende, uavhengig av om dokumentasjon eller forsikring mangler.',
+      handling: 'Registrer pasienten med frikode Intet faktureres.\nSelv om pasienten er under frihetsberøvelse, kan vi fortsatt fakturere forsikringsselskap til pasient eller Helfo. Det er derfor viktig å innhente og dokumentere så mye som mulig om pasienten slik at vi har dekning for å fakturere.'
+    };
+  }
+
   if (data?.isUndocumented && hasCircumstance(data, 'child')) {
     res = {
       type: 'warning',
